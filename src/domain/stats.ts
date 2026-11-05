@@ -66,3 +66,48 @@ export function computeStats(state: AppState, now: string): DashboardStats {
     }),
   };
 }
+
+export interface DayPoint {
+  date: string; // local calendar day, YYYY-MM-DD
+  revenue: number;
+  profit: number;
+  sold: number;
+  received: number;
+}
+
+/**
+ * Per-day revenue, profit, units sold and devices received for the last `days` local calendar days
+ * (oldest first, ending today, zero-filled). `timeZone` is passed in (the browser's zone) so the domain
+ * stays pure; Intl handles daylight-saving changes. Profit uses profit(), like every other figure.
+ */
+export function dailySeries(state: AppState, now: string, days: number, timeZone = "UTC"): DayPoint[] {
+  const fmt = new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" });
+  const dayOf = (iso: string) => {
+    const p = Object.fromEntries(fmt.formatToParts(new Date(iso)).map((x) => [x.type, x.value]));
+    return `${p.year}-${p.month}-${p.day}`;
+  };
+  const [y, m, d] = dayOf(now).split("-").map(Number);
+  const points = new Map<string, DayPoint>();
+  for (let i = days - 1; i >= 0; i--) {
+    // Calendar arithmetic on the date itself (no clock time), so DST can't skip or repeat a day.
+    const date = new Date(Date.UTC(y, m - 1, d - i)).toISOString().slice(0, 10);
+    points.set(date, { date, revenue: 0, profit: 0, sold: 0, received: 0 });
+  }
+  const nowMs = Date.parse(now);
+  for (const dev of state.devices) {
+    const receivedAt = dev.history[0]?.at;
+    if (receivedAt && Date.parse(receivedAt) <= nowMs) {
+      const p = points.get(dayOf(receivedAt));
+      if (p) p.received += 1;
+    }
+    if (dev.sale && Date.parse(dev.sale.at) <= nowMs) {
+      const p = points.get(dayOf(dev.sale.at));
+      if (p) {
+        p.sold += 1;
+        p.revenue += dev.sale.price;
+        p.profit += profit(dev) ?? 0;
+      }
+    }
+  }
+  return [...points.values()].map((p) => ({ ...p, revenue: round(p.revenue, 2), profit: round(p.profit, 2) }));
+}

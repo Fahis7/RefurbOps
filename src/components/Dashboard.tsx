@@ -1,10 +1,12 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import type { AppState, SyncLevel } from "@/domain/types";
-import type { DashboardStats } from "@/domain/stats";
+import { dailySeries, type DashboardStats } from "@/domain/stats";
 import { MARKETPLACES } from "@/domain/pricing";
 import { BarChart } from "./BarChart";
+import { Sparkline } from "./charts";
+import { InOutCard, RevenueProfitCard, type Range } from "./Trends";
 import { STAGE_LABEL, ago, eur, pct } from "./format";
 
 /* ---------------------------------- icons --------------------------------- */
@@ -71,14 +73,37 @@ const ChevronRightIcon = () => (
 
 type Tone = "accent" | "good" | "warn" | "neutral";
 
-function Kpi({ label, value, sub, icon, tone }: { label: string; value: string; sub?: string; icon: ReactNode; tone: Tone }) {
+function Kpi({
+  label,
+  value,
+  sub,
+  icon,
+  tone,
+  spark,
+  sparkLabel,
+}: {
+  label: string;
+  value: string;
+  sub?: string;
+  icon: ReactNode;
+  tone: Tone;
+  spark?: number[];
+  sparkLabel?: string;
+}) {
   return (
     <div className={`kpi kpi-${tone}`}>
       <div className="kpi-head">
         <span className="kpi-label">{label}</span>
         <span className="kpi-icon">{icon}</span>
       </div>
-      <span className="kpi-value">{value}</span>
+      <div className="kpi-value-row">
+        <span className="kpi-value">{value}</span>
+        {spark && (
+          <span className="kpi-spark" title={sparkLabel}>
+            <Sparkline values={spark} />
+          </span>
+        )}
+      </div>
       {sub && <span className="kpi-sub">{sub}</span>}
     </div>
   );
@@ -97,6 +122,14 @@ export function Dashboard({ state, stats, onOpen }: { state: AppState; stats: Da
   // Bottleneck = slowest workshop stage (time on sale is demand, not a process problem).
   const slowest = [...stats.avgDaysByStage].filter((s) => s.stage !== "LISTED").sort((a, b) => b.days - a.days)[0];
   const lastSync = state.syncLog[0];
+  const [range, setRange] = useState<Range>(30);
+  // Local calendar days in the viewer's time zone; recomputed whenever the data changes.
+  const series = useMemo(
+    () => dailySeries(state, new Date().toISOString(), 30, Intl.DateTimeFormat().resolvedOptions().timeZone),
+    [state],
+  );
+  const shown = series.slice(-range);
+  const last14 = series.slice(-14);
 
   return (
     <div className="stack">
@@ -117,15 +150,33 @@ export function Dashboard({ state, stats, onOpen }: { state: AppState; stats: Da
         </div>
       )}
 
+      <RevenueProfitCard points={shown} range={range} onRange={setRange} />
+
       <div className="kpis">
-        <Kpi label="In workshop" value={String(stats.inPipeline)} sub="received → QC" tone="accent" icon={<WrenchIcon />} />
+        <Kpi label="In workshop" value={String(stats.inPipeline)} sub="received → QC" tone="accent" icon={<WrenchIcon />} spark={last14.map((p) => p.received)} sparkLabel="Devices received per day, last 14 days" />
         <Kpi label="Live stock" value={String(stats.listedCount)} sub={`${eur(stats.stockValue)} list value`} tone="accent" icon={<TagIcon />} />
-        <Kpi label="Sold" value={String(stats.soldCount)} sub={`${eur(stats.revenue)} revenue`} tone="good" icon={<CheckCircleIcon />} />
-        <Kpi label="Net profit" value={eur(stats.totalProfit)} sub={`${pct(stats.avgMargin)} margin after fees`} tone="good" icon={<TrendingUpIcon />} />
+        <Kpi label="Sold" value={String(stats.soldCount)} sub={`${eur(stats.revenue)} revenue`} tone="good" icon={<CheckCircleIcon />} spark={last14.map((p) => p.sold)} sparkLabel="Units sold per day, last 14 days" />
+        <Kpi label="Net profit" value={eur(stats.totalProfit)} sub={`${pct(stats.avgMargin)} margin after fees`} tone="good" icon={<TrendingUpIcon />} spark={last14.map((p) => p.profit)} sparkLabel="Net profit per day, last 14 days" />
         <Kpi label="QC first-pass" value={pct(stats.qcFirstPassRate)} sub="listed without re-repair" tone="warn" icon={<ShieldCheckIcon />} />
       </div>
 
-      <div className="grid-3">
+      <div className="grid-halves">
+        <InOutCard points={shown} range={range} />
+        <div className="card">
+          <BarChart
+            title="Net profit by marketplace"
+            caption="After marketplace fees, purchase and repair cost"
+            bars={stats.byMarketplace.map((m) => ({
+              label: MARKETPLACES[m.marketplace].name,
+              value: m.profit,
+              display: eur(m.profit),
+              detail: `${m.sold} sold · ${eur(m.revenue)} revenue · fee ${pct(MARKETPLACES[m.marketplace].feeRate)}`,
+            }))}
+          />
+        </div>
+      </div>
+
+      <div className="grid-halves">
         <div className="card">
           <BarChart
             title="Devices by stage"
@@ -138,18 +189,6 @@ export function Dashboard({ state, stats, onOpen }: { state: AppState; stats: Da
             title="Average days per stage"
             caption={slowest?.days ? `Workshop bottleneck: ${STAGE_LABEL[slowest.stage]} (${slowest.days} d avg)` : undefined}
             bars={stats.avgDaysByStage.map((s) => ({ label: STAGE_LABEL[s.stage], value: s.days, display: `${s.days} d` }))}
-          />
-        </div>
-        <div className="card">
-          <BarChart
-            title="Net profit by marketplace"
-            caption="After marketplace fees, purchase and repair cost"
-            bars={stats.byMarketplace.map((m) => ({
-              label: MARKETPLACES[m.marketplace].name,
-              value: m.profit,
-              display: eur(m.profit),
-              detail: `${m.sold} sold · ${eur(m.revenue)} revenue · fee ${pct(MARKETPLACES[m.marketplace].feeRate)}`,
-            }))}
           />
         </div>
       </div>

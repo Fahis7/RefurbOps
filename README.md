@@ -20,7 +20,7 @@ Built with Next.js 16, React 19, TypeScript (strict) and Vitest, plus the Claude
 | **Grading + pricing**: grade A/B/C from cosmetic score and battery health; suggested price from cost, repairs and grade | Consistent grading and margins, without a spreadsheet |
 | **Multi-marketplace sync** (Back Market, refurbed, Amazon Renewed, simulated): idempotent order webhooks, first order wins, auto-delist elsewhere, late orders rejected with 409 | **Overselling** a single physical unit |
 | **AI listing generator**: Claude writes the marketplace copy from verified facts only; output validated; template fallback | Hours of copywriting, without the AI inventing specs |
-| **Dashboard**: live stock value, net profit after fees, QC first-pass rate, bottleneck stage, profit per marketplace | Leadership sees the business at a glance |
+| **Dashboard**: revenue & profit trend (7d / 30d, one shared € axis, hover crosshair, *View as table*), devices in vs out, KPI sparklines (14 days), live stock value, net profit after fees, QC first-pass rate, bottleneck stage, profit per marketplace | Leadership sees the business at a glance |
 | **AI photo grading**: at GRADING, 1–3 photos → suggested cosmetic score, damage list and confidence; "Apply" only moves the slider, the technician saves; the history records "AI suggested 4/5 (confidence 0.82)"; photos are never stored | Faster, more consistent grading – with a human always deciding |
 | **Ask AI (Ops Assistant)**: plain-English questions ("Which devices are stuck?", "What sold best this week?"); answers only from pre-computed app data, device IDs link to the device | Managers get answers without building a report |
 

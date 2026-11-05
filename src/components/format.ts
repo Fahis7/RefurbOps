@@ -29,3 +29,25 @@ export function ago(iso: string, now = Date.now()): string {
 export function daysSince(iso: string, now = Date.now()) {
   return Math.max(0, (now - Date.parse(iso)) / 86_400_000);
 }
+
+/** Short euro labels for chart axes: €0, €850, €1.2k, €15k, €1.5M. */
+export function eurShort(n: number): string {
+  const sign = n < 0 ? "−" : "";
+  const a = Math.abs(n);
+  const trim = (v: number) => (Math.round(v * 10) / 10).toString();
+  if (a >= 1_000_000) return `${sign}€${trim(a / 1_000_000)}M`;
+  if (a >= 1_000) return `${sign}€${trim(a / 1_000)}k`;
+  return `${sign}€${Math.round(a)}`;
+}
+
+/** "2026-11-05" (a calendar day) → "5 Nov"; with weekday → "Thu 5 Nov". */
+export function dayLabel(date: string, withWeekday = false): string {
+  return new Intl.DateTimeFormat("en-GB", { timeZone: "UTC", day: "numeric", month: "short", ...(withWeekday ? { weekday: "short" } : {}) })
+    .format(new Date(`${date}T00:00:00Z`))
+    .replace(",", "");
+}
+
+/** "2026-11-05" → "Thu". */
+export function weekdayLabel(date: string): string {
+  return new Intl.DateTimeFormat("en-GB", { timeZone: "UTC", weekday: "short" }).format(new Date(`${date}T00:00:00Z`));
+}
