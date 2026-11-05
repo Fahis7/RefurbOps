@@ -1,5 +1,7 @@
 # ♻ RefurbOps
 
+**Live demo:** https://refurbops.vercel.app/
+
 **Operations software for a refurbished-electronics business:** track every device from supplier
 intake through grading, repair and QC to a sale on multiple marketplaces, without overselling.
 
