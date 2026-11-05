@@ -28,12 +28,26 @@ const result = await build({
 const js = result.outputFiles[0].text.replace(/<\/script/gi, "<\\/script");
 const css = await readFile(path.join(root, "src/app/globals.css"), "utf8");
 
+// Same no-flash theme script as src/app/layout.tsx: bundle src/client/theme.ts and read the constant,
+// so there is one source of truth instead of a hand-copied script.
+const themeBuild = await build({
+  entryPoints: [path.join(root, "src/client/theme.ts")],
+  bundle: true,
+  write: false,
+  format: "esm",
+  platform: "neutral",
+  logLevel: "warning",
+});
+const themeModule = await import(`data:text/javascript;base64,${Buffer.from(themeBuild.outputFiles[0].text).toString("base64")}`);
+const themeScript = themeModule.THEME_INIT_SCRIPT.replace(/<\/script/gi, "<\\/script");
+
 const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>RefurbOps – refurbished electronics operations (demo)</title>
+<script>${themeScript}</script>
 <style>${css}</style>
 </head>
 <body>

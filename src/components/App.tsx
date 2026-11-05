@@ -9,6 +9,7 @@ import { Pipeline } from "./Pipeline";
 import { Marketplaces } from "./Marketplaces";
 import { AddDevice } from "./AddDevice";
 import { DeviceDrawer, type Run } from "./DeviceDrawer";
+import { ThemeToggle } from "./ThemeToggle";
 
 type Tab = "dashboard" | "pipeline" | "marketplaces" | "intake";
 type Toast = { id: number; kind: "ok" | "err" | "warn"; text: string };
@@ -119,6 +120,7 @@ export function App({ api = defaultApi }: { api?: Api }) {
         ))}
         <div className="sidebar-foot">
           <span className={`mode ${api.mode}`}>{api.mode === "demo" ? "Offline demo" : "Live API"}</span>
+          <ThemeToggle />
           <button className="btn ghost small-btn" onClick={() => run(() => api.reset(), "Demo data reset")}>
             Reset demo data
           </button>

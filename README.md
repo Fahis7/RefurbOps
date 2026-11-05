@@ -29,6 +29,11 @@ Built with Next.js 16, React 19, TypeScript (strict) and Vitest, plus the Claude
 > **Demo FX rates.** Purchase costs in AED/INR/USD/GBP are converted with fixed, approximate rates in
 > `src/domain/currency.ts` – not live. Production would load daily reference rates (e.g. ECB) instead.
 
+> **Theme.** The sidebar button cycles System → Light → Dark; the choice is saved in `localStorage`
+> (`refurbops-theme`). A tiny inline script (`src/client/theme.ts`, used by `layout.tsx` and the demo
+> build) sets `data-theme` before first paint, so there is no flash of the wrong theme. Dark colour
+> tokens live in one place: `:root[data-theme="dark"]` in `globals.css`.
+
 ## Quick start
 
 ```bash
@@ -40,7 +45,7 @@ Optional: copy `.env.example` to `.env.local` and set `ANTHROPIC_API_KEY` to use
 Without a key, the app uses a deterministic template, so everything still works.
 
 ```bash
-npm test             # 62 unit tests for the business rules
+npm test             # unit tests for the business rules
 npm run typecheck
 npm run build
 npm run build:demo   # single-file offline demo → demo-dist/index.html

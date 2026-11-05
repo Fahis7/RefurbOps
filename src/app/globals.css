@@ -23,26 +23,26 @@
   font-size: 14px;
   line-height: 1.45;
 }
-@media (prefers-color-scheme: dark) {
-  :root {
-    color-scheme: dark;
-    --bg: #121211;
-    --surface: #1a1a19;
-    --surface-2: #232321;
-    --border: #2f2f2c;
-    --text: #f0efec;
-    --text-2: #c3c2b7;
-    --muted: #8f8e86;
-    --accent: #3987e5;
-    --series-1: #3987e5;
-    --good: #4cc26b;
-    --good-bg: #16301e;
-    --warn: #e0b341;
-    --warn-bg: #33290f;
-    --bad: #f07272;
-    --bad-bg: #3a1717;
-    --shadow: none;
-  }
+/* Dark tokens: the ONE place they are defined. data-theme is always "light" or "dark" – the inline
+   script in <head> (src/client/theme.ts) resolves "system" via matchMedia before first paint. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #121211;
+  --surface: #1a1a19;
+  --surface-2: #232321;
+  --border: #2f2f2c;
+  --text: #f0efec;
+  --text-2: #c3c2b7;
+  --muted: #8f8e86;
+  --accent: #3987e5;
+  --series-1: #3987e5;
+  --good: #4cc26b;
+  --good-bg: #16301e;
+  --warn: #e0b341;
+  --warn-bg: #33290f;
+  --bad: #f07272;
+  --bad-bg: #3a1717;
+  --shadow: none;
 }
 
 * { box-sizing: border-box; }
@@ -80,6 +80,8 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 1
 .mode { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; padding: 3px 8px; border-radius: 99px; align-self: flex-start; }
 .mode.server { background: var(--good-bg); color: var(--good); }
 .mode.demo { background: var(--warn-bg); color: var(--warn); }
+.theme-toggle { display: inline-flex; align-items: center; gap: 6px; align-self: flex-start; color: var(--text-2); }
+.theme-icon { width: 1em; text-align: center; }
 .main { padding: 24px 28px 48px; min-width: 0; }
 .page-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 18px; flex-wrap: wrap; }
 

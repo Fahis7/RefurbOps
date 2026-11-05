@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { THEME_INIT_SCRIPT } from "@/client/theme";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -8,7 +9,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    // The inline script sets data-theme on <html> before React hydrates, so the attribute differs from the server HTML.
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      </head>
       <body>{children}</body>
     </html>
   );
