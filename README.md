@@ -14,6 +14,7 @@ Built with Next.js 16, React 19, TypeScript (strict) and Vitest, plus the Claude
 | **Repair pipeline board**: Received → Grading → Repair → QC → Listed → Sold, with time-in-stage and SLA warnings | "Where is every device, and where is stock stuck?" |
 | **QC checklist per device type** (phones get camera/SIM checks, laptops get keyboard checks); listing is **blocked** until every check passes | Nothing reaches a customer without passing QC |
 | **Smart intake**: scan an IMEI → Luhn check + model autofill from the TAC; model autocomplete fills brand, category, storage sizes and colours; live duplicate-serial warning | Fast, consistent intake without typos or double entries |
+| **Multi-currency purchase cost** (EUR, AED, INR, USD, GBP): converted to EUR at intake, with the rate snapshot stored on the device | Buy from Dubai or India suppliers in their currency, while margins stay comparable in EUR |
 | **Grading + pricing**: grade A/B/C from cosmetic score and battery health; suggested price from cost, repairs and grade | Consistent grading and margins, without a spreadsheet |
 | **Multi-marketplace sync** (Back Market, refurbed, Amazon Renewed, simulated): idempotent order webhooks, first order wins, auto-delist elsewhere, late orders rejected with 409 | **Overselling** a single physical unit |
 | **AI listing generator**: Claude writes the marketplace copy from verified facts only; output validated; template fallback | Hours of copywriting, without the AI inventing specs |
@@ -22,6 +23,9 @@ Built with Next.js 16, React 19, TypeScript (strict) and Vitest, plus the Claude
 > **Demo TACs.** IMEI autofill matches the first 8 digits (the TAC) against `src/domain/catalog.ts`.
 > Those TACs are **made-up demo values** (`35000101`, `35000401`, …). Real TACs come from the
 > licensed GSMA database, so a real phone's IMEI won't be recognised until the catalog uses that data.
+
+> **Demo FX rates.** Purchase costs in AED/INR/USD/GBP are converted with fixed, approximate rates in
+> `src/domain/currency.ts` – not live. Production would load daily reference rates (e.g. ECB) instead.
 
 ## Quick start
 
@@ -34,7 +38,7 @@ Optional: copy `.env.example` to `.env.local` and set `ANTHROPIC_API_KEY` to use
 Without a key, the app uses a deterministic template, so everything still works.
 
 ```bash
-npm test             # 49 unit tests for the business rules
+npm test             # 62 unit tests for the business rules
 npm run typecheck
 npm run build
 npm run build:demo   # single-file offline demo → demo-dist/index.html

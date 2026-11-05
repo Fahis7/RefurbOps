@@ -16,7 +16,12 @@ CREATE TABLE devices (
   storage_gb      INTEGER NOT NULL CHECK (storage_gb > 0),
   color           TEXT NOT NULL,
   supplier        TEXT NOT NULL,
-  cost_price      NUMERIC(10,2) NOT NULL CHECK (cost_price > 0),
+  cost_price      NUMERIC(10,2) NOT NULL CHECK (cost_price > 0),   -- EUR (base currency): all pricing/profit uses this
+  -- What we actually paid the supplier + the FX rate frozen at intake (never recomputed).
+  purchase_amount   NUMERIC(14,2) NOT NULL CHECK (purchase_amount > 0),
+  purchase_currency CHAR(3) NOT NULL DEFAULT 'EUR' CHECK (purchase_currency IN ('EUR', 'AED', 'INR', 'USD', 'GBP')),
+  fx_rate           NUMERIC(14,6) NOT NULL DEFAULT 1 CHECK (fx_rate > 0),   -- units of purchase_currency per 1 EUR
+  fx_rate_as_of     DATE NOT NULL,
   repair_cost     NUMERIC(10,2) NOT NULL DEFAULT 0 CHECK (repair_cost >= 0),
   cosmetic_score  SMALLINT CHECK (cosmetic_score BETWEEN 1 AND 5),
   battery_health  SMALLINT NOT NULL CHECK (battery_health BETWEEN 0 AND 100),

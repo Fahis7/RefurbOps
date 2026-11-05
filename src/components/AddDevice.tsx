@@ -4,7 +4,8 @@ import { STORAGE_OPTIONS_GB, type Category, type Device, type NewDeviceInput } f
 import { isValidImei, looksLikeImei, lookupByImei, suggestModels, withCheckDigit, type CatalogEntry } from "@/domain/catalog";
 import type { Api } from "@/client/api";
 import type { Run } from "./DeviceDrawer";
-import { eur, formatStorage } from "./format";
+import { formatStorage } from "./format";
+import { DEMO_RATES, SUPPORTED_CURRENCIES, formatMoney, fromBase, isCurrency, toBase, type CurrencyCode } from "@/domain/currency";
 
 const EMPTY: Partial<NewDeviceInput> = {
   serial: "",
@@ -15,25 +16,28 @@ const EMPTY: Partial<NewDeviceInput> = {
   color: "",
   supplier: "TradeIn Partner EU",
   costPrice: undefined,
+  currency: "EUR",
   batteryHealth: 88,
 };
 
 // Brand, model, storage and colour come from the IMEI autofill (demo TAC 35000401 = iPhone 15).
-const EXAMPLE: Partial<NewDeviceInput> = { supplier: "Carrier Buyback FR", costPrice: 410, batteryHealth: 91 };
+const EXAMPLE: Partial<NewDeviceInput> = { supplier: "Carrier Buyback FR", costPrice: 410, currency: "EUR", batteryHealth: 91 };
 const EXAMPLE_TAC = "35000401";
 
-// Per-browser convenience only – the form works the same without it.
+// Per-browser convenience only (last supplier + currency) – the form works the same without it.
 const SUPPLIER_KEY = "refurbops-last-supplier";
-function readLastSupplier(): string | null {
+const CURRENCY_KEY = "refurbops-last-currency";
+function readLast(key: string): string | null {
   try {
-    return window.localStorage.getItem(SUPPLIER_KEY);
+    return window.localStorage.getItem(key);
   } catch {
     return null;
   }
 }
-function saveLastSupplier(supplier: string) {
+function saveLast(supplier: string | undefined, currency: string | undefined) {
   try {
-    window.localStorage.setItem(SUPPLIER_KEY, supplier);
+    if (supplier) window.localStorage.setItem(SUPPLIER_KEY, supplier);
+    if (currency) window.localStorage.setItem(CURRENCY_KEY, currency);
   } catch {
     /* storage unavailable – ignore */
   }
@@ -77,8 +81,13 @@ export function AddDevice({
   const num = (v: string) => (v === "" ? undefined : Number(v));
 
   useEffect(() => {
-    const last = readLastSupplier();
-    if (last) setForm((f) => ({ ...f, supplier: last }));
+    const supplier = readLast(SUPPLIER_KEY);
+    const currency = readLast(CURRENCY_KEY);
+    setForm((f) => ({
+      ...f,
+      ...(supplier ? { supplier } : {}),
+      ...(isCurrency(currency) ? { currency } : {}), // ignore anything stale or tampered with
+    }));
   }, []);
 
   const pickModel = (entry: CatalogEntry) => {
@@ -124,6 +133,10 @@ export function AddDevice({
 
   const storageOptions = picked?.storageOptions ?? STORAGE_OPTIONS_GB;
 
+  // Purchase cost: conversion and formatting come from the domain; this only displays them.
+  const currency: CurrencyCode = form.currency ?? "EUR";
+  const costInEur = currency !== "EUR" && form.costPrice && form.costPrice > 0 ? toBase(form.costPrice, currency, DEMO_RATES) : null;
+
   return (
     <div className="card form-card">
       <div className="row between">
@@ -145,8 +158,8 @@ export function AddDevice({
           e.preventDefault();
           const res = await run(() => api.addDevice(form), (s) => `${s.createdId} received`);
           if (res?.createdId) {
-            if (form.supplier) saveLastSupplier(form.supplier);
-            setForm({ ...EMPTY, supplier: form.supplier });
+            saveLast(form.supplier, form.currency);
+            setForm({ ...EMPTY, supplier: form.supplier, currency: form.currency });
             setPicked(null);
             setDetected(null);
             onCreated(res.createdId);
@@ -261,9 +274,32 @@ export function AddDevice({
           <input value={form.supplier ?? ""} onChange={(e) => set("supplier", e.target.value)} />
         </label>
         <div className="field">
-          <label htmlFor={ids.cost}>Purchase cost (€)</label>
-          <input id={ids.cost} type="number" value={form.costPrice ?? ""} onChange={(e) => set("costPrice", num(e.target.value))} />
-          {picked && <span className="field-hint muted">Typical cost {eur(picked.typicalCost)}</span>}
+          <label htmlFor={ids.cost}>Purchase cost</label>
+          <div className="money-input">
+            <input
+              id={ids.cost}
+              type="number"
+              min={0}
+              step="any"
+              value={form.costPrice ?? ""}
+              onChange={(e) => set("costPrice", num(e.target.value))}
+            />
+            <select aria-label="Purchase currency" value={currency} onChange={(e) => set("currency", e.target.value as CurrencyCode)}>
+              {SUPPORTED_CURRENCIES.map((c) => (
+                <option key={c}>{c}</option>
+              ))}
+            </select>
+          </div>
+          {costInEur !== null && (
+            <span className="field-hint muted">
+              ≈ {formatMoney(costInEur, "EUR")} at {DEMO_RATES.perEur[currency]} {currency}/EUR (demo rate, {DEMO_RATES.asOf})
+            </span>
+          )}
+          {picked && (
+            <span className="field-hint muted">
+              Typical cost {formatMoney(fromBase(picked.typicalCost, currency, DEMO_RATES), currency)}
+            </span>
+          )}
         </div>
         <label className="field">
           Battery health (%)

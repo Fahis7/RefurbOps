@@ -42,6 +42,16 @@ describe("seed data + stats invariants", () => {
     }
   });
 
+  it("has AED and INR purchases, each converted to EUR with its stored rate", () => {
+    const currencies = new Set(state.devices.map((d) => d.purchase?.currency));
+    expect(currencies).toContain("AED");
+    expect(currencies).toContain("INR");
+    for (const d of state.devices) {
+      const p = d.purchase!;
+      expect(d.costPrice, d.id).toBe(Math.round((p.amount / p.rate + Number.EPSILON) * 100) / 100);
+    }
+  });
+
   it("stage counts add up to total devices", () => {
     expect(stats.byStage.reduce((s, x) => s + x.count, 0)).toBe(state.devices.length);
   });

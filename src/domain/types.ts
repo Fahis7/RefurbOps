@@ -1,5 +1,7 @@
 // Domain types for RefurbOps: one refurbished device moving through the pipeline.
 
+import type { CurrencyCode } from "./currency";
+
 export const STAGES = ["RECEIVED", "GRADING", "REPAIR", "QC", "LISTED", "SOLD"] as const;
 export type Stage = (typeof STAGES)[number];
 
@@ -25,6 +27,14 @@ export interface QCResult {
   passed: boolean;
 }
 
+/** What we actually paid the supplier, with the FX rate frozen at intake (history never changes). */
+export interface Purchase {
+  amount: number; // in `currency`, e.g. 1650
+  currency: CurrencyCode; // e.g. "AED"
+  rate: number; // units of `currency` per 1 EUR at intake, e.g. 4.02 (EUR → 1)
+  rateAsOf: string; // date of that rate, e.g. "2026-11-05"
+}
+
 export interface Device {
   id: string; // internal SKU, e.g. RO-1024
   serial: string; // IMEI or serial number
@@ -34,7 +44,8 @@ export interface Device {
   storageGb: number;
   color: string;
   supplier: string;
-  costPrice: number; // what we paid for it (EUR)
+  costPrice: number; // what we paid for it, in EUR – the ONLY value pricing, profit and stats use
+  purchase?: Purchase; // set on every new device; optional only for records saved before multi-currency
   repairCost: number; // parts + labour (EUR)
   cosmeticScore: number; // 1 (bad) .. 5 (like new), set at grading
   batteryHealth: number; // percent
@@ -92,7 +103,8 @@ export interface NewDeviceInput {
   storageGb: number;
   color: string;
   supplier: string;
-  costPrice: number;
+  costPrice: number; // amount paid, in `currency`
+  currency?: CurrencyCode; // omitted → "EUR", so older API callers behave as before
   batteryHealth: number;
 }
 

@@ -4,13 +4,22 @@ import { checksFor } from "./qc";
 import { MARKETPLACES, MARKETPLACE_IDS } from "./pricing";
 import { templateListing } from "./listing";
 import { CATALOG, withCheckDigit } from "./catalog";
+import { DEMO_RATES, fromBase, type CurrencyCode } from "./currency";
 
 /**
  * Demo data. Instead of hand-writing JSON, the seed REPLAYS realistic history
  * through the real service functions – so seed data can never break the rules.
  */
 
-const SUPPLIERS = ["TradeIn Partner EU", "Corporate Lease Returns", "Carrier Buyback FR", "B2B Wholesale DE"];
+// Suppliers and the currency we pay each one in (most in EUR).
+const SUPPLIERS: { name: string; currency: CurrencyCode }[] = [
+  { name: "TradeIn Partner EU", currency: "EUR" },
+  { name: "Corporate Lease Returns", currency: "EUR" },
+  { name: "Carrier Buyback FR", currency: "EUR" },
+  { name: "B2B Wholesale DE", currency: "EUR" },
+  { name: "Gulf Trade-In Dubai", currency: "AED" },
+  { name: "Mumbai Refurb Exports", currency: "INR" },
+];
 const REPAIRS = [
   { note: "Battery replacement", cost: 35 },
   { note: "Screen replacement", cost: 85 },
@@ -46,6 +55,7 @@ export function seedState(nowIso: string, count = 42): AppState {
 
   for (const { i, age } of plans) {
     const item = pick(CATALOG);
+    const supplier = pick(SUPPLIERS);
     let t = now - age * DAY;
     const iso = () => new Date(t).toISOString();
     const step = (minDays: number, maxDays: number) => {
@@ -64,8 +74,10 @@ export function seedState(nowIso: string, count = 42): AppState {
         category: item.category,
         storageGb: pick(item.storageOptions),
         color: pick(item.colors),
-        supplier: pick(SUPPLIERS),
-        costPrice: Math.round(item.typicalCost * (0.85 + rand() * 0.3)),
+        supplier: supplier.name,
+        // Priced in the supplier's currency (whole units), converted back to EUR by addDevice.
+        costPrice: Math.round(fromBase(item.typicalCost * (0.85 + rand() * 0.3), supplier.currency, DEMO_RATES)),
+        currency: supplier.currency,
         batteryHealth: Math.round(76 + rand() * 22),
       },
       iso(),

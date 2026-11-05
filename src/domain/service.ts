@@ -12,8 +12,10 @@ import {
   type MarketplaceId,
   type NewDeviceInput,
   type OrderEvent,
+  type Purchase,
   type Stage,
 } from "./types";
+import { DEMO_RATES, SUPPORTED_CURRENCIES, formatMoney, isCurrency, toBase, type Rates } from "./currency";
 import { moveDevice } from "./pipeline";
 import { computeGrade, setQCResult } from "./qc";
 import { suggestPrice } from "./pricing";
@@ -25,7 +27,12 @@ function updateDevice(state: AppState, id: string, fn: (d: Device) => Device): A
   return { ...state, devices: state.devices.map((d) => (d.id === id ? fn(d) : d)) };
 }
 
-export function validateNewDevice(input: Partial<NewDeviceInput>): NewDeviceInput {
+/** Validated intake: `costPrice` is now EUR, and `purchase` keeps the original amount + rate. */
+export type ValidIntake = Omit<NewDeviceInput, "currency"> & { purchase: Purchase };
+
+const MAX_COST_EUR = 10000;
+
+export function validateNewDevice(input: Partial<NewDeviceInput>, rates: Rates = DEMO_RATES): ValidIntake {
   const errors: string[] = [];
   const str = (k: keyof NewDeviceInput) => {
     const v = input[k];
@@ -39,7 +46,19 @@ export function validateNewDevice(input: Partial<NewDeviceInput>): NewDeviceInpu
   };
   const storageGb = Number(input.storageGb);
   if (!STORAGE_OPTIONS_GB.includes(storageGb)) errors.push(`storageGb must be one of ${STORAGE_OPTIONS_GB.join(", ")}`);
-  const out: NewDeviceInput = {
+  // Purchase cost: any supported currency; the limit applies to the EUR value after conversion.
+  const currency = input.currency ?? "EUR";
+  if (!isCurrency(currency)) errors.push(`currency must be one of ${SUPPORTED_CURRENCIES.join(", ")}`);
+  const amount = Number(input.costPrice);
+  let costPrice = NaN;
+  if (!(amount > 0) || !Number.isFinite(amount)) errors.push("costPrice must be greater than 0");
+  else if (isCurrency(currency)) {
+    costPrice = toBase(amount, currency, rates);
+    if (costPrice > MAX_COST_EUR) {
+      errors.push(`costPrice must be at most €${MAX_COST_EUR.toLocaleString("en-IE")} after conversion to EUR (got ${formatMoney(costPrice, "EUR")})`);
+    }
+  }
+  const out: ValidIntake = {
     serial: str("serial"),
     brand: str("brand"),
     model: str("model"),
@@ -47,16 +66,18 @@ export function validateNewDevice(input: Partial<NewDeviceInput>): NewDeviceInpu
     storageGb,
     color: str("color"),
     supplier: str("supplier"),
-    costPrice: num("costPrice", 1, 10000),
+    costPrice,
     batteryHealth: num("batteryHealth", 0, 100),
+    purchase: { amount, currency: currency as Purchase["currency"], rate: isCurrency(currency) ? rates.perEur[currency] : NaN, rateAsOf: rates.asOf },
   };
   if (!["Smartphone", "Laptop", "Tablet"].includes(out.category)) errors.push("category is invalid");
   if (errors.length) throw new DomainError(errors.join("; "));
   return out;
 }
 
-export function addDevice(state: AppState, raw: Partial<NewDeviceInput>, now: string): AppState {
-  const input = validateNewDevice(raw);
+/** `rates` is passed in like `now` (domain stays pure); production would pass the day's loaded rates. */
+export function addDevice(state: AppState, raw: Partial<NewDeviceInput>, now: string, rates: Rates = DEMO_RATES): AppState {
+  const input = validateNewDevice(raw, rates);
   if (state.devices.some((d) => d.serial === input.serial)) {
     throw new DomainError(`A device with serial ${input.serial} already exists`);
   }

@@ -27,8 +27,8 @@ export function withDevice(overrides: Record<string, unknown> = {}): { state: Ap
 }
 
 /** A device that has passed QC and is live on all three marketplaces. */
-export function listedDevice(): { state: AppState; id: string } {
-  let { state, id } = withDevice();
+export function listedDevice(overrides: Record<string, unknown> = {}): { state: AppState; id: string } {
+  let { state, id } = withDevice(overrides);
   state = move(state, id, "GRADING", at(1));
   state = grade(state, id, { cosmeticScore: 5, batteryHealth: 92, needsRepair: false }, at(2));
   for (const c of checksFor("Smartphone")) state = recordQC(state, id, c.id, true);

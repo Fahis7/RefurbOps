@@ -5,6 +5,7 @@ import { checksFor, computeGrade, qcPassed } from "@/domain/qc";
 import { MARKETPLACES, MARKETPLACE_IDS, profit, suggestPrice } from "@/domain/pricing";
 import type { Api, Snapshot } from "@/client/api";
 import { STAGE_LABEL, ago, eur, formatStorage } from "./format";
+import { formatMoney } from "@/domain/currency";
 
 export type Run = (fn: () => Promise<Snapshot>, okMessage?: string | ((s: Snapshot) => string)) => Promise<Snapshot | undefined>;
 
@@ -261,7 +262,16 @@ export function DeviceDrawer({
           </div>
           <div>
             <span className="muted small">Cost</span>
-            <span>{eur(d.costPrice)}</span>
+            {d.purchase && d.purchase.currency !== "EUR" ? (
+              <span title={`Rate ${d.purchase.rate} ${d.purchase.currency}/EUR as of ${d.purchase.rateAsOf}`}>
+                {eur(d.costPrice, 2)}{" "}
+                <span className="muted small">
+                  (paid {formatMoney(d.purchase.amount, d.purchase.currency)} @ {d.purchase.rate})
+                </span>
+              </span>
+            ) : (
+              <span>{eur(d.costPrice)}</span>
+            )}
           </div>
           <div>
             <span className="muted small">Repairs</span>
