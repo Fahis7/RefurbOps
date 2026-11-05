@@ -83,6 +83,7 @@ export function PhotoGradeSuggest({
         // Too unsure (e.g. not a device): no score, no Apply – only the message and Ignore.
         <div className="photo-suggestion">
           <p className="answer-info">Too unsure to suggest a grade – grade manually</p>
+          {state.suggestion.notes && <p className="muted small photo-notes">{state.suggestion.notes}</p>}
           <div className="row gap">
             <button type="button" className="btn ghost small-btn" onClick={ignore}>
               Ignore

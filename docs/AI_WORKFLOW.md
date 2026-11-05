@@ -100,6 +100,7 @@ and scratches → 1/5 (0.8, crack reported as major); a mug → confidence 0.02 
   low confidence (0.3). Accuracy on real workshop photos (lighting, glare, fine micro-scratches) is untested.
 - **Non-device photos still return a score.** The mug got a placeholder 3/5 with confidence 0.02. Below
   confidence 0.5 (`MIN_APPLY_CONFIDENCE`) the UI hides the score and *Apply* and shows only "Too unsure to
-  suggest a grade – grade manually" + *Ignore*; from 0.5 to 0.6 *Apply* stays with a low-confidence warning.
+  suggest a grade – grade manually" + *Ignore*, with the AI's notes as a muted hint (e.g. "shows a mug, not a
+  smartphone"); from 0.5 to 0.6 *Apply* stays with a low-confidence warning.
 - Only one front-facing photo was tested per call; multi-photo requests (2–3 images) were covered by unit tests only.
 
