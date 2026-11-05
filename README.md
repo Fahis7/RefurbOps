@@ -13,10 +13,15 @@ Built with Next.js 16, React 19, TypeScript (strict) and Vitest, plus the Claude
 |---|---|
 | **Repair pipeline board**: Received → Grading → Repair → QC → Listed → Sold, with time-in-stage and SLA warnings | "Where is every device, and where is stock stuck?" |
 | **QC checklist per device type** (phones get camera/SIM checks, laptops get keyboard checks); listing is **blocked** until every check passes | Nothing reaches a customer without passing QC |
+| **Smart intake**: scan an IMEI → Luhn check + model autofill from the TAC; model autocomplete fills brand, category, storage sizes and colours; live duplicate-serial warning | Fast, consistent intake without typos or double entries |
 | **Grading + pricing**: grade A/B/C from cosmetic score and battery health; suggested price from cost, repairs and grade | Consistent grading and margins, without a spreadsheet |
 | **Multi-marketplace sync** (Back Market, refurbed, Amazon Renewed, simulated): idempotent order webhooks, first order wins, auto-delist elsewhere, late orders rejected with 409 | **Overselling** a single physical unit |
 | **AI listing generator**: Claude writes the marketplace copy from verified facts only; output validated; template fallback | Hours of copywriting, without the AI inventing specs |
 | **Dashboard**: live stock value, net profit after fees, QC first-pass rate, bottleneck stage, profit per marketplace | Leadership sees the business at a glance |
+
+> **Demo TACs.** IMEI autofill matches the first 8 digits (the TAC) against `src/domain/catalog.ts`.
+> Those TACs are **made-up demo values** (`35000101`, `35000401`, …). Real TACs come from the
+> licensed GSMA database, so a real phone's IMEI won't be recognised until the catalog uses that data.
 
 ## Quick start
 
@@ -29,7 +34,7 @@ Optional: copy `.env.example` to `.env.local` and set `ANTHROPIC_API_KEY` to use
 Without a key, the app uses a deterministic template, so everything still works.
 
 ```bash
-npm test             # 38 unit tests for the business rules
+npm test             # 49 unit tests for the business rules
 npm run typecheck
 npm run build
 npm run build:demo   # single-file offline demo → demo-dist/index.html
@@ -55,7 +60,7 @@ oversell protection isn't guaranteed. Use a real database (`db/schema.sql`) for 
 ## 3-minute demo script
 
 1. **Dashboard**: KPIs, the "Average days per stage" chart shows the bottleneck (Repair).
-2. **Device intake** → *Fill example* → *Receive device*. It opens in the pipeline.
+2. **Device intake** → *Fill example*: a valid demo IMEI autofills an iPhone 15 ("Detected: Apple iPhone 15") → *Receive device*. It opens in the pipeline.
 3. **Start grading** → set cosmetic 5, battery 91 → grade **A** is computed → skip repair → QC.
 4. **QC**: mark one check *Fail* → listing is blocked → *Send back to repair*. Complete the repair → QC again.
 5. Pass all checks → **✨ Generate listing with AI** → **Approve & list** on 3 marketplaces.

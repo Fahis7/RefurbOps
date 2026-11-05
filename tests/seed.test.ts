@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { CATALOG, seedState } from "@/domain/seed";
-import { STORAGE_OPTIONS_GB } from "@/domain/types";
+import { seedState } from "@/domain/seed";
+import { isValidImei, lookupByImei } from "@/domain/catalog";
 import { computeStats } from "@/domain/stats";
 import { qcPassed } from "@/domain/qc";
 
@@ -33,8 +33,13 @@ describe("seed data + stats invariants", () => {
     }
   });
 
-  it("every catalog storage size is an allowed option", () => {
-    for (const item of CATALOG) expect(STORAGE_OPTIONS_GB, item.model).toContain(item.storageGb);
+  it("every seeded phone has a valid IMEI whose TAC matches its model", () => {
+    const phones = state.devices.filter((d) => d.category === "Smartphone");
+    expect(phones.length).toBeGreaterThan(0);
+    for (const d of phones) {
+      expect(isValidImei(d.serial), `${d.id} ${d.serial}`).toBe(true);
+      expect(lookupByImei(d.serial)?.model, d.id).toBe(d.model);
+    }
   });
 
   it("stage counts add up to total devices", () => {

@@ -1,28 +1,14 @@
-import type { AppState, Category, MarketplaceId } from "./types";
+import type { AppState, MarketplaceId } from "./types";
 import { addDevice, approveAndList, completeRepair, grade, move, receiveOrder, recordQC, setListingText } from "./service";
 import { checksFor } from "./qc";
 import { MARKETPLACES, MARKETPLACE_IDS } from "./pricing";
 import { templateListing } from "./listing";
+import { CATALOG, withCheckDigit } from "./catalog";
 
 /**
  * Demo data. Instead of hand-writing JSON, the seed REPLAYS realistic history
  * through the real service functions – so seed data can never break the rules.
  */
-
-export const CATALOG: { brand: string; model: string; category: Category; storageGb: number; cost: number; colors: string[] }[] = [
-  { brand: "Apple", model: "iPhone 13", category: "Smartphone", storageGb: 128, cost: 280, colors: ["Midnight", "Starlight", "Blue"] },
-  { brand: "Apple", model: "iPhone 14 Pro", category: "Smartphone", storageGb: 256, cost: 520, colors: ["Space Black", "Deep Purple"] },
-  { brand: "Apple", model: "iPhone 12", category: "Smartphone", storageGb: 64, cost: 190, colors: ["Black", "White"] },
-  { brand: "Samsung", model: "Galaxy S22", category: "Smartphone", storageGb: 128, cost: 240, colors: ["Phantom Black", "Green"] },
-  { brand: "Samsung", model: "Galaxy S23", category: "Smartphone", storageGb: 256, cost: 360, colors: ["Cream", "Lavender"] },
-  { brand: "Google", model: "Pixel 7", category: "Smartphone", storageGb: 128, cost: 200, colors: ["Obsidian", "Snow"] },
-  { brand: "Apple", model: "MacBook Air M1", category: "Laptop", storageGb: 256, cost: 430, colors: ["Space Grey", "Silver"] },
-  { brand: "Apple", model: 'MacBook Pro 14" M1 Pro', category: "Laptop", storageGb: 512, cost: 900, colors: ["Space Grey"] },
-  { brand: "Dell", model: "XPS 13 9310", category: "Laptop", storageGb: 512, cost: 380, colors: ["Platinum Silver"] },
-  { brand: "Lenovo", model: "ThinkPad T14 Gen 2", category: "Laptop", storageGb: 256, cost: 300, colors: ["Black"] },
-  { brand: "Apple", model: "iPad Air 5", category: "Tablet", storageGb: 64, cost: 290, colors: ["Blue", "Starlight"] },
-  { brand: "Apple", model: "iPad 9th gen", category: "Tablet", storageGb: 64, cost: 150, colors: ["Space Grey", "Silver"] },
-];
 
 const SUPPLIERS = ["TradeIn Partner EU", "Corporate Lease Returns", "Carrier Buyback FR", "B2B Wholesale DE"];
 const REPAIRS = [
@@ -70,14 +56,16 @@ export function seedState(nowIso: string, count = 42): AppState {
     state = addDevice(
       state,
       {
-        serial: `${item.category === "Laptop" ? "SN" : "35"}${String(100000000 + Math.floor(rand() * 899999999))}${i}`,
+        serial: item.tacPrefixes.length
+          ? withCheckDigit(pick(item.tacPrefixes) + String(Math.floor(rand() * 1_000_000)).padStart(6, "0"))
+          : `SN${String(100000000 + Math.floor(rand() * 899999999))}${i}`,
         brand: item.brand,
         model: item.model,
         category: item.category,
-        storageGb: item.storageGb,
+        storageGb: pick(item.storageOptions),
         color: pick(item.colors),
         supplier: pick(SUPPLIERS),
-        costPrice: Math.round(item.cost * (0.85 + rand() * 0.3)),
+        costPrice: Math.round(item.typicalCost * (0.85 + rand() * 0.3)),
         batteryHealth: Math.round(76 + rand() * 22),
       },
       iso(),

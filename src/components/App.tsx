@@ -148,6 +148,8 @@ export function App({ api = defaultApi }: { api?: Api }) {
           <AddDevice
             api={api}
             run={run}
+            devices={state.devices}
+            onOpen={setOpen}
             onCreated={(id) => {
               setTab("pipeline");
               setOpen(id);
