@@ -70,6 +70,13 @@ export function PhotoGradeSuggest({
         </button>
       )}
       {state.kind === "idle" && <span className="muted small"> Up to {MAX_IMAGES} photos · AI suggests, you decide</span>}
+      {state.kind === "working" && (
+        <div className="skeleton-card" aria-hidden>
+          <span className="skeleton w-40" />
+          <span className="skeleton w-90" />
+          <span className="skeleton w-70" />
+        </div>
+      )}
 
       {state.kind === "failed" && (
         <p className={state.failure.reason === "not-configured" || state.failure.reason === "offline-demo" ? "answer-info" : "answer-error"} role="alert">

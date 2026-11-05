@@ -6,6 +6,7 @@ import { SLA_DAYS } from "@/domain/pipeline";
 import { DEVICE_COLUMNS, devicesToRows, filterDevices, toCsv } from "@/domain/export";
 import { downloadCsv, exportFileName } from "@/client/download";
 import { STAGE_LABEL, daysSince, eur, formatStorage } from "./format";
+import { EmptyState, IconInbox } from "./icons";
 
 
 function DeviceCard({ d, onOpen }: { d: Device; onOpen: (id: string) => void }) {
@@ -13,7 +14,7 @@ function DeviceCard({ d, onOpen }: { d: Device; onOpen: (id: string) => void }) 
   const late = SLA_DAYS[d.stage] !== undefined && since > SLA_DAYS[d.stage]!;
   const qc = d.stage === "QC" ? qcProgress(d) : null;
   return (
-    <button className={`dcard ${late ? "late" : ""}`} onClick={() => onOpen(d.id)}>
+    <button className={`dcard ${d.grade ? `grade-${d.grade}` : ""} ${late ? "late" : ""}`} onClick={() => onOpen(d.id)}>
       <span className="dcard-top">
         <span className="mono small">{d.id}</span>
         {d.grade && <span className={`grade g${d.grade}`}>Grade {d.grade}</span>}
@@ -76,10 +77,12 @@ export function Pipeline({ state, onOpen }: { state: AppState; onOpen: (id: stri
             <section key={stage} className="column">
               <header>
                 <span className={`stage-pill s-${stage}`}>{STAGE_LABEL[stage]}</span>
-                <span className="muted small">{items.length}</span>
+                <span className="count-pill" aria-label={`${items.length} devices`}>
+                  {items.length}
+                </span>
               </header>
               <div className="column-body">
-                {items.length === 0 && <p className="muted small empty">Nothing here</p>}
+                {items.length === 0 && <EmptyState icon={<IconInbox />} title="Nothing here" hint={`No devices in ${STAGE_LABEL[stage]}`} />}
                 {items.map((d) => (
                   <DeviceCard key={d.id} d={d} onOpen={onOpen} />
                 ))}

@@ -7,6 +7,7 @@ import { MARKETPLACES } from "@/domain/pricing";
 import { BarChart } from "./BarChart";
 import { Sparkline } from "./charts";
 import { InOutCard, RevenueProfitCard, type Range } from "./Trends";
+import { EmptyState, IconActivity } from "./icons";
 import { STAGE_LABEL, ago, eur, pct } from "./format";
 
 /* ---------------------------------- icons --------------------------------- */
@@ -96,14 +97,12 @@ function Kpi({
         <span className="kpi-label">{label}</span>
         <span className="kpi-icon">{icon}</span>
       </div>
-      <div className="kpi-value-row">
-        <span className="kpi-value">{value}</span>
-        {spark && (
-          <span className="kpi-spark" title={sparkLabel}>
-            <Sparkline values={spark} />
-          </span>
-        )}
-      </div>
+      <span className="kpi-value">{value}</span>
+      {spark && (
+        <span className="kpi-spark" title={sparkLabel}>
+          <Sparkline values={spark} />
+        </span>
+      )}
       {sub && <span className="kpi-sub">{sub}</span>}
     </div>
   );
@@ -202,7 +201,7 @@ export function Dashboard({ state, stats, onOpen }: { state: AppState; stats: Da
           <span className="pill">{state.syncLog.length} events</span>
         </div>
         {state.syncLog.length === 0 ? (
-          <p className="muted dash-empty">No activity yet.</p>
+          <EmptyState icon={<IconActivity />} title="No activity yet" hint="Marketplace sync events will appear here." />
         ) : (
           <ul className="activity">
             {state.syncLog.slice(0, 8).map((e) => (

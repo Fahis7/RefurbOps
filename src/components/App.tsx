@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import type { MarketplaceId, OrderEvent } from "@/domain/types";
 import { MARKETPLACES } from "@/domain/pricing";
 import type { Api, Snapshot } from "@/client/api";
@@ -11,17 +11,21 @@ import { AddDevice } from "./AddDevice";
 import { DeviceDrawer, type Run } from "./DeviceDrawer";
 import { ThemeToggle } from "./ThemeToggle";
 import { Assistant } from "./Assistant";
+import { IconDashboard, IconIntake, IconPipeline, IconSparkle, IconSync, LogoMark } from "./icons";
+import { ago } from "./format";
 
 type Tab = "dashboard" | "pipeline" | "marketplaces" | "intake" | "assistant";
 type Toast = { id: number; kind: "ok" | "err" | "warn"; text: string };
 
-const TABS: { id: Tab; label: string; icon: string }[] = [
-  { id: "dashboard", label: "Dashboard", icon: "▦" },
-  { id: "pipeline", label: "Repair pipeline", icon: "⇉" },
-  { id: "marketplaces", label: "Marketplace sync", icon: "⇄" },
-  { id: "intake", label: "Device intake", icon: "＋" },
-  { id: "assistant", label: "Ask AI", icon: "✦" },
+const TABS: { id: Tab; label: string; icon: ReactNode; subtitle: string }[] = [
+  { id: "dashboard", label: "Dashboard", icon: <IconDashboard />, subtitle: "Pipeline, sales and profit at a glance" },
+  { id: "pipeline", label: "Repair pipeline", icon: <IconPipeline />, subtitle: "Every device from intake to sale, with time in stage" },
+  { id: "marketplaces", label: "Marketplace sync", icon: <IconSync />, subtitle: "One unit, many marketplaces – listings, orders and sync" },
+  { id: "intake", label: "Device intake", icon: <IconIntake />, subtitle: "Register a device: IMEI check, model autofill, purchase cost" },
+  { id: "assistant", label: "Ask AI", icon: <IconSparkle />, subtitle: "Ask about stock, sales and suppliers in plain English" },
 ];
+
+const TOAST_ICON: Record<Toast["kind"], string> = { ok: "✓", warn: "!", err: "✕" };
 
 let orderSeq = Math.floor(Date.now() / 1000) % 100000;
 const newOrderId = (mp: MarketplaceId) => `${MARKETPLACES[mp].code}-${++orderSeq}`;
@@ -33,6 +37,11 @@ export function App({ api = defaultApi }: { api?: Api }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
   const lastOrder = useRef<OrderEvent | null>(null);
+  // When the data on screen was last loaded – shown in the page header ("updated just now").
+  const [updatedAt, setUpdatedAt] = useState<string | null>(null);
+  useEffect(() => {
+    if (snap) setUpdatedAt(new Date().toISOString());
+  }, [snap]);
 
   const toast = useCallback((kind: Toast["kind"], text: string) => {
     const id = Date.now() + Math.random();
@@ -99,13 +108,14 @@ export function App({ api = defaultApi }: { api?: Api }) {
   if (loadError) return <div className="center">Could not load data: {loadError}</div>;
   if (!snap) return <div className="center muted">Loading RefurbOps…</div>;
   const { state, stats } = snap;
+  const current = TABS.find((t) => t.id === tab)!;
 
   return (
     <div className="shell">
       <nav className="sidebar">
         <div className="brand">
           <span className="logo" aria-hidden>
-            ♻
+            <LogoMark />
           </span>
           <div>
             <strong>RefurbOps</strong>
@@ -113,7 +123,7 @@ export function App({ api = defaultApi }: { api?: Api }) {
           </div>
         </div>
         {TABS.map((t) => (
-          <button key={t.id} className={`nav ${tab === t.id ? "active" : ""}`} onClick={() => setTab(t.id)}>
+          <button key={t.id} className={`nav ${tab === t.id ? "active" : ""}`} aria-current={tab === t.id ? "page" : undefined} onClick={() => setTab(t.id)}>
             <span aria-hidden className="nav-icon">
               {t.icon}
             </span>
@@ -131,10 +141,14 @@ export function App({ api = defaultApi }: { api?: Api }) {
 
       <main className="main">
         <header className="page-head">
-          <h1>{TABS.find((t) => t.id === tab)!.label}</h1>
-          <span className="muted small">
-            {state.devices.length} devices tracked · {stats.listedCount} live on marketplaces
-          </span>
+          <div className="page-title">
+            <h1>{current.label}</h1>
+            <p className="page-sub">{current.subtitle}</p>
+          </div>
+          <p className="page-context">
+            <span className="num">{state.devices.length}</span> devices · <span className="num">{stats.listedCount}</span> live
+            {updatedAt && <> · updated {ago(updatedAt)}</>}
+          </p>
         </header>
         {tab === "dashboard" && <Dashboard state={state} stats={stats} onOpen={setOpen} />}
         {tab === "pipeline" && <Pipeline state={state} onOpen={setOpen} />}
@@ -168,7 +182,10 @@ export function App({ api = defaultApi }: { api?: Api }) {
       <div className="toasts" aria-live="polite">
         {toasts.map((t) => (
           <div key={t.id} className={`toast ${t.kind}`}>
-            {t.text}
+            <span className="toast-icon" aria-hidden>
+              {TOAST_ICON[t.kind]}
+            </span>
+            <span>{t.text}</span>
           </div>
         ))}
       </div>

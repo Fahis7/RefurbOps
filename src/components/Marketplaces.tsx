@@ -3,6 +3,7 @@ import { useState } from "react";
 import type { AppState, MarketplaceId } from "@/domain/types";
 import { MARKETPLACES, MARKETPLACE_IDS } from "@/domain/pricing";
 import { ago, eur } from "./format";
+import { EmptyState, IconInbox } from "./icons";
 import { SALES_COLUMNS, salesToRows, toCsv } from "@/domain/export";
 import { downloadCsv, exportFileName } from "@/client/download";
 
@@ -60,12 +61,12 @@ export function Marketplaces({
       <div className="grid-2">
         <div className="card">
           <h3>Live listings ({listed.length})</h3>
-          <div className="table-scroll">
+          <div className="table-scroll table-sticky">
             <table className="table">
               <thead>
                 <tr>
                   <th>Device</th>
-                  <th className="right">Price</th>
+                  <th className="num">Price</th>
                   {MARKETPLACE_IDS.map((m) => (
                     <th key={m}>{MARKETPLACES[m].name}</th>
                   ))}
@@ -74,7 +75,9 @@ export function Marketplaces({
               <tbody>
                 {listed.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="muted">No live listings. Finish QC on a device to list it.</td>
+                    <td colSpan={5}>
+                      <EmptyState icon={<IconInbox />} title="No live listings" hint="Finish QC on a device to list it." />
+                    </td>
                   </tr>
                 )}
                 {listed.map((d) => (
@@ -83,7 +86,7 @@ export function Marketplaces({
                       <button className="link" onClick={() => onOpen(d.id)}>{d.id}</button>
                       <div className="small muted">{d.model} · {d.grade}</div>
                     </td>
-                    <td className="right">{eur(d.listPrice ?? 0)}</td>
+                    <td className="num">{eur(d.listPrice ?? 0)}</td>
                     {MARKETPLACE_IDS.map((m) => {
                       const l = state.listings.find((x) => x.deviceId === d.id && x.marketplace === m);
                       return (

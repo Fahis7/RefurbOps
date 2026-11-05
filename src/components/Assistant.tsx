@@ -3,6 +3,7 @@ import { useMemo, useState, type FormEvent } from "react";
 import type { AppState } from "@/domain/types";
 import { MAX_QUESTION_CHARS, buildAssistantContext, linkifyDeviceIds } from "@/domain/assistant";
 import type { Api, AskResult } from "@/client/api";
+import { EmptyState, IconChat } from "./icons";
 
 const SUGGESTIONS = [
   "Which devices are stuck?",
@@ -76,17 +77,29 @@ export function Assistant({ api, state, onOpen }: { api: Api; state: AppState; o
       </div>
 
       {turns.length === 0 && (
-        <p className="muted small ask-hint">
-          Answers are generated from the data currently in the app (up to 300 devices plus pre-computed totals).
-        </p>
+        <EmptyState
+          icon={<IconChat />}
+          title="Ask your first question"
+          hint="Answers come from the data currently in the app (up to 300 devices plus pre-computed totals)."
+        />
       )}
 
       <div className="stack" aria-live="polite">
         {turns.map((t) => (
           <div key={t.id} className="card answer">
-            <p className="answer-q">{t.question}</p>
+            <div className="answer-head">
+              <p className="answer-q">{t.question}</p>
+              <span className="ai-badge" title="AI-generated answer">
+                AI
+              </span>
+            </div>
             {t.result === null ? (
-              <p className="muted answer-loading">Thinking…</p>
+              <div className="skeleton-card answer-loading">
+                <span className="sr-only">Thinking…</span>
+                <span className="skeleton w-90" aria-hidden />
+                <span className="skeleton w-70" aria-hidden />
+                <span className="skeleton w-40" aria-hidden />
+              </div>
             ) : t.result.ok ? (
               <>
                 <p className="answer-text">

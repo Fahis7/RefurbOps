@@ -291,20 +291,20 @@ export function GroupedBarChart({ groups, summary, height = 200 }: { groups: Bar
 
 /* ------------------------------- sparkline ------------------------------- */
 
-/** Decorative 14-day trend in a KPI tile (the KPI value itself carries the meaning). */
+/** Decorative 14-day trend in a KPI tile (the KPI value itself carries the meaning). Stretches to its row width. */
 export function Sparkline({ values, className = "" }: { values: number[]; className?: string }) {
-  const w = 72;
-  const h = 26;
+  const w = 100;
+  const h = 24;
   if (values.length < 2) return null;
   const min = Math.min(0, ...values);
   const max = Math.max(...values, min + 1);
-  const px = (i: number) => (i * (w - 2)) / (values.length - 1) + 1;
+  const px = (i: number) => (i * w) / (values.length - 1);
   const py = (v: number) => h - 2 - ((v - min) / (max - min)) * (h - 4);
-  const d = values.map((v, i) => `${i ? "L" : "M"}${px(i).toFixed(1)},${py(v).toFixed(1)}`).join("");
+  const d = values.map((v, i) => `${i ? "L" : "M"}${px(i).toFixed(2)},${py(v).toFixed(2)}`).join("");
   return (
-    <svg className={`spark ${className}`} width={w} height={h} viewBox={`0 0 ${w} ${h}`} aria-hidden>
-      <path className="spark-area" d={`${d}L${px(values.length - 1)},${h}L${px(0)},${h}Z`} />
-      <path className="spark-line" d={d} />
+    <svg className={`spark ${className}`} viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" aria-hidden>
+      <path className="spark-area" d={`${d}L${w},${h}L0,${h}Z`} />
+      <path className="spark-line" d={d} vectorEffect="non-scaling-stroke" />
     </svg>
   );
 }
