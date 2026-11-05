@@ -2,6 +2,8 @@
 import { useMemo, useState } from "react";
 import { STAGES, type AppState, type Device } from "@/domain/types";
 import { qcProgress } from "@/domain/qc";
+import { DEVICE_COLUMNS, devicesToRows, filterDevices, toCsv } from "@/domain/export";
+import { downloadCsv, exportFileName } from "@/client/download";
 import { STAGE_LABEL, daysSince, eur, formatStorage } from "./format";
 
 const SLA_DAYS: Partial<Record<Device["stage"], number>> = { RECEIVED: 1, GRADING: 1, REPAIR: 3, QC: 1.5, LISTED: 10 };
@@ -40,12 +42,14 @@ function DeviceCard({ d, onOpen }: { d: Device; onOpen: (id: string) => void }) 
 export function Pipeline({ state, onOpen }: { state: AppState; onOpen: (id: string) => void }) {
   const [q, setQ] = useState("");
   const [showSold, setShowSold] = useState(false);
-  const filtered = useMemo(() => {
-    const s = q.trim().toLowerCase();
-    if (!s) return state.devices;
-    return state.devices.filter((d) => [d.id, d.serial, d.brand, d.model, d.color, d.supplier].join(" ").toLowerCase().includes(s));
-  }, [q, state.devices]);
+  // Same filter for the board and the CSV export, so the file always matches what is on screen.
+  const filtered = useMemo(() => filterDevices(state.devices, q, showSold), [q, showSold, state.devices]);
   const stages = showSold ? STAGES : STAGES.filter((s) => s !== "SOLD");
+
+  const exportCsv = () => {
+    const now = new Date();
+    downloadCsv(exportFileName("devices", now), toCsv(DEVICE_COLUMNS, devicesToRows(filtered, now.toISOString())));
+  };
 
   return (
     <div className="stack">
@@ -55,6 +59,15 @@ export function Pipeline({ state, onOpen }: { state: AppState; onOpen: (id: stri
           <input type="checkbox" checked={showSold} onChange={(e) => setShowSold(e.target.checked)} /> Show sold
         </label>
         <span className="muted small">⚠ = over target time for the stage</span>
+        <button
+          type="button"
+          className="btn small-btn toolbar-end"
+          onClick={exportCsv}
+          disabled={filtered.length === 0}
+          title="Download the devices shown on the board as CSV (opens in Excel)"
+        >
+          ⤓ Export CSV ({filtered.length})
+        </button>
       </div>
       <div className="board" style={{ gridTemplateColumns: `repeat(${stages.length}, minmax(190px, 1fr))` }}>
         {stages.map((stage) => {

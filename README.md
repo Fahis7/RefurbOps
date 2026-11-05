@@ -34,6 +34,15 @@ Built with Next.js 16, React 19, TypeScript (strict) and Vitest, plus the Claude
 > build) sets `data-theme` before first paint, so there is no flash of the wrong theme. Dark colour
 > tokens live in one place: `:root[data-theme="dark"]` in `globals.css`.
 
+> **CSV export.** *Repair pipeline → Export CSV* downloads the devices currently on the board
+> (respects the search box and "Show sold"); *Marketplace sync → Export sales CSV* downloads every
+> sale with fees and profit. Files are UTF-8 with a BOM so Excel shows € and ₹, and text cells
+> starting with `= + - @` are prefixed with `'` (formula-injection guard). The separator is a comma:
+> Excel set to a `;` locale (e.g. German) may show everything in one column – use
+> *Data → From Text/CSV* there.
+> Known limitation: Excel shows 15-digit IMEIs in scientific notation (e.g. `3.50002E+14`); the digits are intact – format the column as Number with 0 decimals.
+> Known limitation: "Sold date" is the UTC calendar date, so a sale just after midnight local time (e.g. UAE) shows the previous day.
+
 ## Quick start
 
 ```bash

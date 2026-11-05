@@ -3,6 +3,8 @@ import { useState } from "react";
 import type { AppState, MarketplaceId } from "@/domain/types";
 import { MARKETPLACES, MARKETPLACE_IDS } from "@/domain/pricing";
 import { ago, eur } from "./format";
+import { SALES_COLUMNS, salesToRows, toCsv } from "@/domain/export";
+import { downloadCsv, exportFileName } from "@/client/download";
 
 export function Marketplaces({
   state,
@@ -22,6 +24,10 @@ export function Marketplaces({
   const [filter, setFilter] = useState<"all" | MarketplaceId>("all");
   const listed = state.devices.filter((d) => d.stage === "LISTED");
   const log = state.syncLog.filter((e) => filter === "all" || e.marketplace === filter).slice(0, 40);
+  const soldCount = state.devices.filter((d) => d.stage === "SOLD").length;
+
+  const exportSales = () =>
+    downloadCsv(exportFileName("sales", new Date()), toCsv(SALES_COLUMNS, salesToRows(state.devices)));
 
   return (
     <div className="stack">
@@ -38,6 +44,15 @@ export function Marketplaces({
           </button>
           <button className="btn" disabled={!canResend} onClick={onResend}>
             🔁 Test: resend last webhook (duplicate)
+          </button>
+          <button
+            type="button"
+            className="btn toolbar-end"
+            onClick={exportSales}
+            disabled={soldCount === 0}
+            title="Download every sale with fees and profit as CSV (opens in Excel)"
+          >
+            ⤓ Export sales CSV ({soldCount})
           </button>
         </div>
       </div>

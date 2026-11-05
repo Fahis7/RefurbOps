@@ -155,6 +155,7 @@ input[type="checkbox"] { accent-color: var(--accent); }
 
 /* Pipeline board */
 .toolbar { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+.toolbar-end { margin-left: auto; }
 .search { width: min(420px, 100%); }
 .board { display: grid; gap: 12px; overflow-x: auto; padding-bottom: 8px; }
 .column { background: var(--surface-2); border-radius: var(--radius); padding: 10px; min-height: 300px; }
