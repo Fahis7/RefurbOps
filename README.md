@@ -29,7 +29,7 @@ Optional: copy `.env.example` to `.env.local` and set `ANTHROPIC_API_KEY` to use
 Without a key, the app uses a deterministic template, so everything still works.
 
 ```bash
-npm test             # 34 unit tests for the business rules
+npm test             # 38 unit tests for the business rules
 npm run typecheck
 npm run build
 npm run build:demo   # single-file offline demo → demo-dist/index.html

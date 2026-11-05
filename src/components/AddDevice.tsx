@@ -1,8 +1,9 @@
 "use client";
 import { useState } from "react";
-import type { Category, NewDeviceInput } from "@/domain/types";
+import { STORAGE_OPTIONS_GB, type Category, type NewDeviceInput } from "@/domain/types";
 import type { Api } from "@/client/api";
 import type { Run } from "./DeviceDrawer";
+import { formatStorage } from "./format";
 
 const EMPTY: Partial<NewDeviceInput> = {
   serial: "",
@@ -74,8 +75,14 @@ export function AddDevice({ api, run, onCreated }: { api: Api; run: Run; onCreat
           <input value={form.model ?? ""} onChange={(e) => set("model", e.target.value)} placeholder="e.g. iPhone 15" />
         </label>
         <label className="field">
-          Storage (GB)
-          <input type="number" value={form.storageGb ?? ""} onChange={(e) => set("storageGb", num(e.target.value))} />
+          Storage
+          <select value={form.storageGb ?? 128} onChange={(e) => set("storageGb", Number(e.target.value))}>
+            {STORAGE_OPTIONS_GB.map((gb) => (
+              <option key={gb} value={gb}>
+                {formatStorage(gb)}
+              </option>
+            ))}
+          </select>
         </label>
         <label className="field">
           Colour

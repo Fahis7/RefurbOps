@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { seedState } from "@/domain/seed";
+import { CATALOG, seedState } from "@/domain/seed";
+import { STORAGE_OPTIONS_GB } from "@/domain/types";
 import { computeStats } from "@/domain/stats";
 import { qcPassed } from "@/domain/qc";
 
@@ -30,6 +31,10 @@ describe("seed data + stats invariants", () => {
     for (let i = 0; i < log.length - 1; i++) {
       expect(log[i].at >= log[i + 1].at, `${log[i].id} (${log[i].at}) before ${log[i + 1].id} (${log[i + 1].at})`).toBe(true);
     }
+  });
+
+  it("every catalog storage size is an allowed option", () => {
+    for (const item of CATALOG) expect(STORAGE_OPTIONS_GB, item.model).toContain(item.storageGb);
   });
 
   it("stage counts add up to total devices", () => {

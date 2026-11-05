@@ -1,5 +1,8 @@
 import type { Stage } from "@/domain/types";
 
+// Lives in the domain so listing text formats storage the same way as the UI.
+export { formatStorage } from "@/domain/types";
+
 export const eur = (n: number, digits = 0) =>
   new Intl.NumberFormat("en-IE", { style: "currency", currency: "EUR", maximumFractionDigits: digits, minimumFractionDigits: digits }).format(n);
 

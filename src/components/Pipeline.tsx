@@ -2,7 +2,7 @@
 import { useMemo, useState } from "react";
 import { STAGES, type AppState, type Device } from "@/domain/types";
 import { qcProgress } from "@/domain/qc";
-import { STAGE_LABEL, daysSince, eur } from "./format";
+import { STAGE_LABEL, daysSince, eur, formatStorage } from "./format";
 
 const SLA_DAYS: Partial<Record<Device["stage"], number>> = { RECEIVED: 1, GRADING: 1, REPAIR: 3, QC: 1.5, LISTED: 10 };
 
@@ -18,7 +18,7 @@ function DeviceCard({ d, onOpen }: { d: Device; onOpen: (id: string) => void }) 
       </span>
       <span className="dcard-title">{d.model}</span>
       <span className="muted small">
-        {d.storageGb >= 1024 ? `${d.storageGb / 1024} TB` : `${d.storageGb} GB`} · {d.color}
+        {formatStorage(d.storageGb)} · {d.color}
       </span>
       {qc && (
         <span className="progress" aria-label={`QC ${qc.done} of ${qc.total}`}>

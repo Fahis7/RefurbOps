@@ -6,6 +6,7 @@
  */
 import {
   DomainError,
+  STORAGE_OPTIONS_GB,
   type AppState,
   type Device,
   type MarketplaceId,
@@ -36,12 +37,14 @@ export function validateNewDevice(input: Partial<NewDeviceInput>): NewDeviceInpu
     if (!Number.isFinite(v) || v < min || v > max) errors.push(`${k} must be between ${min} and ${max}`);
     return v;
   };
+  const storageGb = Number(input.storageGb);
+  if (!STORAGE_OPTIONS_GB.includes(storageGb)) errors.push(`storageGb must be one of ${STORAGE_OPTIONS_GB.join(", ")}`);
   const out: NewDeviceInput = {
     serial: str("serial"),
     brand: str("brand"),
     model: str("model"),
     category: input.category as NewDeviceInput["category"],
-    storageGb: num("storageGb", 16, 8192),
+    storageGb,
     color: str("color"),
     supplier: str("supplier"),
     costPrice: num("costPrice", 1, 10000),

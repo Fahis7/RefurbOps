@@ -8,6 +8,12 @@ export type Category = "Smartphone" | "Laptop" | "Tablet";
 
 export type MarketplaceId = "backmarket" | "refurbed" | "amazon";
 
+/** Storage sizes devices actually ship with. Intake rejects anything else. */
+export const STORAGE_OPTIONS_GB: readonly number[] = [32, 64, 128, 256, 512, 1024, 2048];
+
+/** 128 → "128 GB", 1024 → "1 TB". Used by the UI and the listing text. */
+export const formatStorage = (gb: number) => (gb >= 1024 ? `${gb / 1024} TB` : `${gb} GB`);
+
 export interface StageEvent {
   stage: Stage;
   at: string; // ISO timestamp

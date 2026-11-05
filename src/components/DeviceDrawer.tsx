@@ -4,7 +4,7 @@ import type { AppState, Device, MarketplaceId } from "@/domain/types";
 import { checksFor, computeGrade, qcPassed } from "@/domain/qc";
 import { MARKETPLACES, MARKETPLACE_IDS, profit, suggestPrice } from "@/domain/pricing";
 import type { Api, Snapshot } from "@/client/api";
-import { STAGE_LABEL, ago, eur } from "./format";
+import { STAGE_LABEL, ago, eur, formatStorage } from "./format";
 
 export type Run = (fn: () => Promise<Snapshot>, okMessage?: string | ((s: Snapshot) => string)) => Promise<Snapshot | undefined>;
 
@@ -238,7 +238,7 @@ export function DeviceDrawer({
               {d.brand} {d.model}
             </h2>
             <span className="muted">
-              {d.storageGb} GB · {d.color} · {d.category}
+              {formatStorage(d.storageGb)} · {d.color} · {d.category}
             </span>
           </div>
           <button className="btn ghost" onClick={onClose} aria-label="Close">

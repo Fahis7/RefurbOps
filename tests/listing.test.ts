@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { buildListingPrompt, parseListingResponse, templateListing } from "@/domain/listing";
+import { formatStorage } from "@/domain/types";
 import { listedDevice } from "./helpers";
+
+describe("storage formatting", () => {
+  it("formats storage as GB below 1 TB and TB from 1024", () => {
+    expect([128, 1024, 2048].map(formatStorage)).toEqual(["128 GB", "1 TB", "2 TB"]);
+  });
+});
 
 /** The AI output is untrusted input: these tests pin down how we validate it. */
 describe("AI listing guardrails", () => {

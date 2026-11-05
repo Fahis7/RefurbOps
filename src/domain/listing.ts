@@ -1,4 +1,4 @@
-import type { Device } from "./types";
+import { formatStorage, type Device } from "./types";
 import { checksFor } from "./qc";
 
 const GRADE_TEXT = {
@@ -13,7 +13,7 @@ export function listingFacts(device: Device) {
     brand: device.brand,
     model: device.model,
     category: device.category,
-    storage: `${device.storageGb} GB`,
+    storage: formatStorage(device.storageGb),
     color: device.color,
     grade: device.grade ?? "B",
     gradeMeaning: GRADE_TEXT[device.grade ?? "B"],

@@ -9,7 +9,7 @@ import { templateListing } from "./listing";
  * through the real service functions – so seed data can never break the rules.
  */
 
-const CATALOG: { brand: string; model: string; category: Category; storageGb: number; cost: number; colors: string[] }[] = [
+export const CATALOG: { brand: string; model: string; category: Category; storageGb: number; cost: number; colors: string[] }[] = [
   { brand: "Apple", model: "iPhone 13", category: "Smartphone", storageGb: 128, cost: 280, colors: ["Midnight", "Starlight", "Blue"] },
   { brand: "Apple", model: "iPhone 14 Pro", category: "Smartphone", storageGb: 256, cost: 520, colors: ["Space Black", "Deep Purple"] },
   { brand: "Apple", model: "iPhone 12", category: "Smartphone", storageGb: 64, cost: 190, colors: ["Black", "White"] },

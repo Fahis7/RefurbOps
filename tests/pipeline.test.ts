@@ -14,6 +14,15 @@ describe("intake validation", () => {
     const { state } = withDevice();
     expect(() => addDevice(state, { ...state.devices[0] }, T0)).toThrow(/already exists/);
   });
+
+  it("rejects a storage size that isn't a real option", () => {
+    expect(() => withDevice({ storageGb: 129 })).toThrow("storageGb must be one of 32, 64, 128, 256, 512, 1024, 2048");
+  });
+
+  it("accepts a standard storage size", () => {
+    const { state, id } = withDevice({ storageGb: 256 });
+    expect(state.devices.find((d) => d.id === id)!.storageGb).toBe(256);
+  });
 });
 
 describe("stage transitions", () => {
