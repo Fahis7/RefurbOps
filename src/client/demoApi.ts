@@ -12,9 +12,12 @@ import type { Api, Snapshot } from "./api";
  */
 const KEY = "refurbops-demo-v1";
 
+// Browser storage only: this module is also imported (unused) during server rendering.
+const storage = () => (typeof window === "undefined" ? undefined : window.localStorage);
+
 function loadInitial(): AppState {
   try {
-    const raw = globalThis.localStorage?.getItem(KEY);
+    const raw = storage()?.getItem(KEY);
     if (raw) return JSON.parse(raw) as AppState;
   } catch {
     /* storage unavailable – fall through to fresh seed */
@@ -22,25 +25,30 @@ function loadInitial(): AppState {
   return seedState(new Date().toISOString());
 }
 
-let state: AppState = loadInitial();
+// Created on first use, so importing this module (e.g. in live-API mode) costs nothing.
+let current: AppState | null = null;
+const getState = () => (current ??= loadInitial());
 
 function persist() {
   try {
-    globalThis.localStorage?.setItem(KEY, JSON.stringify(state));
+    storage()?.setItem(KEY, JSON.stringify(current));
   } catch {
     /* ignore – demo still works in memory */
   }
 }
 
 const now = () => new Date().toISOString();
-const snap = (extra: Partial<Snapshot> = {}): Snapshot => ({ state, stats: computeStats(state, now()), ...extra });
+const snap = (extra: Partial<Snapshot> = {}): Snapshot => {
+  const state = getState();
+  return { state, stats: computeStats(state, now()), ...extra };
+};
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /** Run a mutation; convert DomainError into a rejected promise like the HTTP API does. */
 async function run(fn: (s: AppState) => AppState, extra: Partial<Snapshot> = {}): Promise<Snapshot> {
   await wait(120); // feel like a network call
   try {
-    state = fn(state);
+    current = fn(getState());
   } catch (e) {
     if (e instanceof DomainError) throw new Error(e.message);
     throw e;
@@ -64,7 +72,7 @@ export const demoApi: Api = {
   list: (id, mps, price) => run((s) => svc.approveAndList(s, id, mps, now(), price)),
   generateListing: async (id) => {
     await wait(700);
-    const device = state.devices.find((d) => d.id === id);
+    const device = getState().devices.find((d) => d.id === id);
     if (!device) throw new Error(`Device ${id} not found`);
     return run((s) => svc.setListingText(s, id, { ...templateListing(device), source: "template" }), {
       warning: "Offline demo uses the template generator. The full app calls the Claude API (src/server/ai.ts).",

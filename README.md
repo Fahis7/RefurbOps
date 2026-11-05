@@ -29,11 +29,28 @@ Optional: copy `.env.example` to `.env.local` and set `ANTHROPIC_API_KEY` to use
 Without a key, the app uses a deterministic template, so everything still works.
 
 ```bash
-npm test             # 32 unit tests for the business rules
+npm test             # 34 unit tests for the business rules
 npm run typecheck
 npm run build
 npm run build:demo   # single-file offline demo → demo-dist/index.html
 ```
+
+## Deploy (Vercel)
+
+Vercel's filesystem is read-only, so the JSON file store (`data/db.json`) cannot be written there.
+To deploy the demo:
+
+1. In Vercel → *Project → Settings → Environment Variables*, set `NEXT_PUBLIC_DEMO_MODE=1`.
+2. **Redeploy.** `NEXT_PUBLIC_*` values are baked in at build time, so a new variable only takes
+   effect after a new build.
+
+The UI then runs in demo mode: the same business rules execute in the browser, with data kept in
+browser storage. `NEXT_PUBLIC_VERCEL_ENV` also turns on demo mode, but Vercel only sets it when
+*Automatically expose System Environment Variables* is enabled, so don't rely on it.
+
+Without demo mode, the API routes fall back to an **in-memory** store on Vercel (a warning is
+logged). That data resets on every cold start and isn't shared between server instances, so the
+oversell protection isn't guaranteed. Use a real database (`db/schema.sql`) for production.
 
 ## 3-minute demo script
 

@@ -16,7 +16,12 @@ const result = await build({
   jsx: "automatic",
   target: "es2020",
   alias: { "@": path.join(root, "src") },
-  define: { "process.env.NODE_ENV": '"production"' },
+  // The browser has no `process`: inline every env var the client code reads.
+  define: {
+    "process.env.NODE_ENV": '"production"',
+    "process.env.NEXT_PUBLIC_DEMO_MODE": '"1"',
+    "process.env.NEXT_PUBLIC_VERCEL_ENV": '""',
+  },
   logLevel: "warning",
 });
 

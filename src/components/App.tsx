@@ -2,7 +2,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { MarketplaceId, OrderEvent } from "@/domain/types";
 import { MARKETPLACES } from "@/domain/pricing";
-import { httpApi, type Api, type Snapshot } from "@/client/api";
+import type { Api, Snapshot } from "@/client/api";
+import { defaultApi } from "@/client";
 import { Dashboard } from "./Dashboard";
 import { Pipeline } from "./Pipeline";
 import { Marketplaces } from "./Marketplaces";
@@ -22,7 +23,7 @@ const TABS: { id: Tab; label: string; icon: string }[] = [
 let orderSeq = Math.floor(Date.now() / 1000) % 100000;
 const newOrderId = (mp: MarketplaceId) => `${MARKETPLACES[mp].code}-${++orderSeq}`;
 
-export function App({ api = httpApi }: { api?: Api }) {
+export function App({ api = defaultApi }: { api?: Api }) {
   const [snap, setSnap] = useState<Snapshot | null>(null);
   const [tab, setTab] = useState<Tab>("dashboard");
   const [open, setOpen] = useState<string | null>(null);

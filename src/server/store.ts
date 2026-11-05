@@ -14,6 +14,9 @@ const DB_PATH = path.join(process.cwd(), "data", "db.json");
 
 let cache: AppState | null = null;
 let queue: Promise<unknown> = Promise.resolve(); // serialises writes (one at a time)
+// Set once a write fails on Vercel (read-only filesystem): state then lives only in `cache`,
+// per server instance, and resets on cold start. Fine for a demo – production needs Postgres.
+let memoryOnly = false;
 
 async function load(): Promise<AppState> {
   if (cache) return cache;
@@ -27,10 +30,20 @@ async function load(): Promise<AppState> {
 }
 
 async function save(state: AppState) {
-  await fs.mkdir(path.dirname(DB_PATH), { recursive: true });
-  const tmp = `${DB_PATH}.tmp`;
-  await fs.writeFile(tmp, JSON.stringify(state, null, 2));
-  await fs.rename(tmp, DB_PATH); // atomic replace – no half-written file on crash
+  if (memoryOnly) return;
+  try {
+    await fs.mkdir(path.dirname(DB_PATH), { recursive: true });
+    const tmp = `${DB_PATH}.tmp`;
+    await fs.writeFile(tmp, JSON.stringify(state, null, 2));
+    await fs.rename(tmp, DB_PATH); // atomic replace – no half-written file on crash
+  } catch (err) {
+    // On Vercel the error code varies (ENOENT on mkdir, EROFS, …), so any write failure counts.
+    // Everywhere else a failed write is a real error and must surface.
+    if (!process.env.VERCEL) throw err;
+    memoryOnly = true;
+    const code = (err as NodeJS.ErrnoException).code ?? String(err);
+    console.warn(`[store] Cannot write ${DB_PATH} (${code}) – memory-only mode, data resets on cold start`);
+  }
 }
 
 export async function read(): Promise<AppState> {
