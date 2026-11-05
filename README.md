@@ -21,6 +21,7 @@ Built with Next.js 16, React 19, TypeScript (strict) and Vitest, plus the Claude
 | **Multi-marketplace sync** (Back Market, refurbed, Amazon Renewed, simulated): idempotent order webhooks, first order wins, auto-delist elsewhere, late orders rejected with 409 | **Overselling** a single physical unit |
 | **AI listing generator**: Claude writes the marketplace copy from verified facts only; output validated; template fallback | Hours of copywriting, without the AI inventing specs |
 | **Dashboard**: live stock value, net profit after fees, QC first-pass rate, bottleneck stage, profit per marketplace | Leadership sees the business at a glance |
+| **AI photo grading**: at GRADING, 1–3 photos → suggested cosmetic score, damage list and confidence; "Apply" only moves the slider, the technician saves; the history records "AI suggested 4/5 (confidence 0.82)"; photos are never stored | Faster, more consistent grading – with a human always deciding |
 | **Ask AI (Ops Assistant)**: plain-English questions ("Which devices are stuck?", "What sold best this week?"); answers only from pre-computed app data, device IDs link to the device | Managers get answers without building a report |
 
 > **Demo TACs.** IMEI autofill matches the first 8 digits (the TAC) against `src/domain/catalog.ts`.
@@ -86,6 +87,8 @@ tab shows "AI not configured". The offline single-file demo (`demo-dist/`) has n
 explains that instead.
 
 **Privacy.** When you ask a question, model names, suppliers and prices from the app are sent to Anthropic.
+With AI photo grading, the photos (resized to ≤1024 px) and the device model are sent to Anthropic for that
+request only; the app never stores them.
 
 **Cost control.** The route is public. It has a best-effort rate limit of 10 questions per minute per
 IP, but it is in memory and every serverless instance counts separately, so it only slows down casual
@@ -132,6 +135,7 @@ CLAUDE.md         context + rules for AI coding agents working on this repo
 | POST | `/api/devices/:id/list` | `{ marketplaces[], price? }` |
 | POST | `/api/webhooks/orders` | `{ marketplace, orderId, deviceId, price }` → 200 / 409 |
 | POST | `/api/reset` | – |
+| POST | `/api/ai/grade-photo` | `{ images: base64 JPEG[1–3], category, model }` → `200 { suggestion }` · `400` · `413` too large · `429` · `502` · `503` |
 | POST | `/api/ai/ask` | `{ question, context }` → `200 { answer }` · `400` invalid · `429` rate limited · `502` AI failed · `503 { error: "AI not configured" }` |
 
 Business-rule violations return `400 { error }`, e.g. *"All QC checks must pass before a device can be listed"*.

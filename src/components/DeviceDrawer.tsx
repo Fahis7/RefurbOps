@@ -6,6 +6,7 @@ import { MARKETPLACES, MARKETPLACE_IDS, profit, suggestPrice } from "@/domain/pr
 import type { Api, Snapshot } from "@/client/api";
 import { STAGE_LABEL, ago, eur, formatStorage } from "./format";
 import { formatMoney } from "@/domain/currency";
+import { PhotoGradeSuggest } from "./PhotoGradeSuggest";
 
 export type Run = (fn: () => Promise<Snapshot>, okMessage?: string | ((s: Snapshot) => string)) => Promise<Snapshot | undefined>;
 
@@ -22,12 +23,24 @@ function GradingPanel({ d, api, run }: { d: Device; api: Api; run: Run }) {
   const [cosmetic, setCosmetic] = useState(4);
   const [battery, setBattery] = useState(d.batteryHealth);
   const [needsRepair, setNeedsRepair] = useState(d.batteryHealth < 80);
+  // Set only when the technician clicks Apply; recorded in the history note on Save (even if they then change the slider).
+  const [aiSuggestion, setAiSuggestion] = useState<{ cosmeticScore: number; confidence: number } | undefined>();
   const preview = computeGrade(cosmetic, battery);
   return (
     <div className="panel">
       <h4>Grade this device</h4>
+      <PhotoGradeSuggest
+        d={d}
+        api={api}
+        onApply={(s) => {
+          setCosmetic(s.cosmeticScore);
+          setAiSuggestion({ cosmeticScore: s.cosmeticScore, confidence: s.confidence });
+        }}
+        onIgnore={() => setAiSuggestion(undefined)}
+      />
       <label className="field">
         Cosmetic condition: <strong>{cosmetic}/5</strong>
+        {aiSuggestion && <span className="muted small"> · AI suggested {aiSuggestion.cosmeticScore}/5</span>}
         <input type="range" min={1} max={5} value={cosmetic} onChange={(e) => setCosmetic(Number(e.target.value))} />
         <span className="muted small">1 = heavy damage · 5 = like new</span>
       </label>
@@ -43,7 +56,9 @@ function GradingPanel({ d, api, run }: { d: Device; api: Api; run: Run }) {
       </p>
       <button
         className="btn primary"
-        onClick={() => run(() => api.grade(d.id, { cosmeticScore: cosmetic, batteryHealth: battery, needsRepair }), `${d.id} graded ${preview}`)}
+        onClick={() =>
+          run(() => api.grade(d.id, { cosmeticScore: cosmetic, batteryHealth: battery, needsRepair, aiSuggestion }), `${d.id} graded ${preview}`)
+        }
       >
         Save grade → {needsRepair ? "Repair" : "QC"}
       </button>

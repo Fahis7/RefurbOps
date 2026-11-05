@@ -4,7 +4,7 @@ import { computeStats } from "@/domain/stats";
 import { seedState } from "@/domain/seed";
 import { templateListing } from "@/domain/listing";
 import * as svc from "@/domain/service";
-import { askServer, type Api, type Snapshot } from "./api";
+import { askServer, gradePhotoServer, type Api, type Snapshot } from "./api";
 
 /**
  * Offline demo backend: same service functions as the server, state kept in
@@ -89,4 +89,5 @@ export const demoApi: Api = {
   },
   // Stateless route: the browser sends the context, so the Vercel demo works too. The static file has no server.
   ask: askServer,
+  gradePhoto: gradePhotoServer,
 };

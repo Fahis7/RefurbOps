@@ -209,6 +209,18 @@ input[type="checkbox"] { accent-color: var(--accent); }
 .chip { font: inherit; font-size: 12px; border: 1px solid var(--border); background: var(--surface); color: var(--text-2); border-radius: 6px; padding: 2px 8px; cursor: pointer; }
 .chip.on-pass { background: var(--good-bg); color: var(--good); border-color: var(--good); }
 .chip.on-fail { background: var(--bad-bg); color: var(--bad); border-color: var(--bad); }
+/* AI photo grading */
+.photo-grade { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; margin-bottom: 12px; }
+.photo-grade > .answer-info, .photo-grade > .answer-error { align-self: stretch; }
+.photo-suggestion { align-self: stretch; border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; background: var(--surface-2); display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.photo-suggestion-head { margin: 0; }
+.photo-notes { margin: 0; overflow-wrap: anywhere; }
+.damage-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; font-size: 13px; overflow-wrap: anywhere; }
+.sev { display: inline-block; min-width: 64px; text-align: center; font-size: 11px; font-weight: 600; border-radius: 4px; padding: 1px 6px; margin-right: 4px; }
+.sev-minor { background: var(--good-bg); color: var(--good); }
+.sev-moderate { background: var(--warn-bg); color: var(--warn); }
+.sev-major { background: var(--bad-bg); color: var(--bad); }
+
 /* AI Ops Assistant */
 .assistant { max-width: 860px; }
 .ask-label { display: block; font-weight: 600; margin-bottom: 8px; }

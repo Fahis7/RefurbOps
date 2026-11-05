@@ -8,7 +8,7 @@ import { MARKETPLACE_IDS } from "@/domain/pricing";
 /**
  * POST /api/devices/:id/:action
  *   move     { to, note? }                       – generic stage change (rules in domain/pipeline.ts)
- *   grade    { cosmeticScore, batteryHealth, needsRepair }
+ *   grade    { cosmeticScore, batteryHealth, needsRepair, aiSuggestion? }
  *   repair   { cost, note }
  *   qc       { checkId, passed }
  *   list     { marketplaces, price? }             – QC passed → LISTED + publish
@@ -36,6 +36,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string; ac
               cosmeticScore: Number(input.cosmeticScore),
               batteryHealth: Number(input.batteryHealth),
               needsRepair: Boolean(input.needsRepair),
+              aiSuggestion: aiSuggestionFrom(input.aiSuggestion),
             },
             now,
           ),
@@ -73,4 +74,12 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string; ac
         throw new DomainError(`Unknown action "${action}"`);
     }
   });
+}
+
+/** Optional applied AI photo suggestion; shape-checked here, range-checked by the domain. */
+function aiSuggestionFrom(v: unknown): { cosmeticScore: number; confidence: number } | undefined {
+  if (v == null) return undefined;
+  if (typeof v !== "object") throw new DomainError("Invalid AI suggestion");
+  const o = v as Record<string, unknown>;
+  return { cosmeticScore: Number(o.cosmeticScore), confidence: Number(o.confidence) };
 }

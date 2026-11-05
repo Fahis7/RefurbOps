@@ -109,19 +109,39 @@ export function move(state: AppState, id: string, to: Stage, now: string, note?:
   return next;
 }
 
-/** Grading: record cosmetic score + battery, compute grade, send to REPAIR or straight to QC. */
+/**
+ * Grading: record cosmetic score + battery, compute grade, send to REPAIR or straight to QC.
+ * `aiSuggestion` = an AI photo suggestion the technician applied. The human-chosen score is what counts;
+ * the suggestion is only recorded in the history note (an override stays visible).
+ */
 export function grade(
   state: AppState,
   id: string,
-  input: { cosmeticScore: number; batteryHealth: number; needsRepair: boolean },
+  input: {
+    cosmeticScore: number;
+    batteryHealth: number;
+    needsRepair: boolean;
+    aiSuggestion?: { cosmeticScore: number; confidence: number };
+  },
   now: string,
 ): AppState {
   if (input.cosmeticScore < 1 || input.cosmeticScore > 5) throw new DomainError("Cosmetic score must be 1–5");
+  const ai = input.aiSuggestion;
+  if (
+    ai &&
+    (!Number.isInteger(ai.cosmeticScore) || ai.cosmeticScore < 1 || ai.cosmeticScore > 5 ||
+      typeof ai.confidence !== "number" || !(ai.confidence >= 0 && ai.confidence <= 1))
+  ) {
+    throw new DomainError("Invalid AI suggestion");
+  }
   return updateDevice(state, id, (d) => {
     if (d.stage !== "GRADING") throw new DomainError("Device is not in GRADING");
     const g = computeGrade(input.cosmeticScore, input.batteryHealth);
     const graded = { ...d, cosmeticScore: input.cosmeticScore, batteryHealth: input.batteryHealth, grade: g };
-    return moveDevice(graded, input.needsRepair ? "REPAIR" : "QC", now, `Graded ${g}`);
+    const aiNote = ai
+      ? `${ai.cosmeticScore !== input.cosmeticScore ? ` · cosmetic ${input.cosmeticScore}/5` : ""} · AI suggested ${ai.cosmeticScore}/5 (confidence ${ai.confidence.toFixed(2)})`
+      : "";
+    return moveDevice(graded, input.needsRepair ? "REPAIR" : "QC", now, `Graded ${g}${aiNote}`);
   });
 }
 

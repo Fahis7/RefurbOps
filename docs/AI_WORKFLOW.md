@@ -62,6 +62,19 @@ subtle bug AI code introduces and a good test suite catches.
   (`max_tokens`) or `refusal` answer is rejected (502), never shown. Current models think by default and
   thinking tokens count against `max_tokens` – a 400-token budget once produced a half answer.
 
+## Guardrails on AI photo grading
+
+- **AI suggests, a human decides.** The suggestion only moves the cosmetic slider when the technician clicks
+  *Apply*; nothing is saved until they click *Save grade*. The history note records the suggestion and any
+  override (e.g. "Graded C · cosmetic 3/5 · AI suggested 4/5 (confidence 0.82)").
+- **Visible condition only.** The prompt forbids guessing battery or function, asks for low confidence when
+  a photo is not a device or is unclear, and treats text inside photos as data, never instructions.
+- **Strict output parsing** (`parseGradingResponse`): integer score 1–5, ≤ 10 damage items, severity enum,
+  confidence 0–1, capped strings – anything else → 502 "AI answer could not be used". Confidence < 0.6 shows
+  "Low confidence – check manually".
+- **Photos are never stored:** resized in the browser (≤ 1024 px JPEG), sent once, not written to state, disk
+  or logs. Route limits: 1–3 JPEGs, ≤ 1.5 MB each as base64, ≤ 4 MB body (413), rate limit, no key → 503.
+
 ### Known limitations (Ask AI)
 
 Evaluated 2026-11-06 with 15 real calls (4 suggested questions + a prompt-injection supplier name, 3 runs each)
@@ -76,4 +89,16 @@ all 15 correct, injection never followed, 0 timeouts, 70–137 words.
   break this down by marketplace" after a marketplace line). Ambiguous questions get a stated interpretation.
 - The evaluation covers one dataset and one injection pattern; the model is non-deterministic, so re-run
   the check after any prompt or model change.
+
+### Known limitations (AI photo grading)
+
+Evaluated 2026-11-06 with 6 real calls (3 synthetic test images × 2 runs) against the production build:
+6/6 valid JSON, 0 timeouts, 2.2–3.9 s. Clean phone drawing → 4/5 (confidence 0.3); same drawing with a crack
+and scratches → 1/5 (0.8, crack reported as major); a mug → confidence 0.02 with "not a smartphone" notes.
+
+- **Tested on drawings, not real photos.** The model noticed the clean image was an illustration and gave it
+  low confidence (0.3). Accuracy on real workshop photos (lighting, glare, fine micro-scratches) is untested.
+- **Non-device photos still return a score.** The mug got a placeholder 3/5 with confidence 0.02. The UI shows
+  "Low confidence – check manually", but the *Apply* button is still offered – the technician must not apply it.
+- Only one front-facing photo was tested per call; multi-photo requests (2–3 images) were covered by unit tests only.
 

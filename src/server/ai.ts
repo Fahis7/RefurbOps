@@ -2,6 +2,15 @@ import "server-only";
 import type { Device } from "@/domain/types";
 import { buildListingPrompt, parseListingResponse, templateListing } from "@/domain/listing";
 import { buildAssistantPrompt, parseAssistantAnswer, type AssistantContext } from "@/domain/assistant";
+import { buildGradingPrompt, parseGradingResponse, type GradingSuggestion } from "@/domain/vision";
+import type { Category } from "@/domain/types";
+
+type ContentBlock =
+  | { type: "text"; text: string }
+  | { type: "image"; source: { type: "base64"; media_type: "image/jpeg"; data: string } };
+
+/** The model answered, but its output failed validation (route: 502 "AI answer could not be used"). */
+export class AiOutputError extends Error {}
 
 const TIMEOUT_MS = 20_000;
 
@@ -21,7 +30,7 @@ async function callClaude({
   effort = "low",
 }: {
   system?: string;
-  user: string;
+  user: string | ContentBlock[];
   maxTokens?: number;
   effort?: "low" | "medium";
 }): Promise<string> {
@@ -76,3 +85,19 @@ export async function askAssistant(question: string, context: AssistantContext):
   if (!answer) throw new Error("Model returned an empty answer");
   return answer;
 }
+
+/**
+ * Suggest a cosmetic score from 1–3 JPEG photos. The photos are only forwarded to Claude for this request –
+ * never stored or logged. Throws AiOutputError if the answer fails strict validation.
+ */
+export async function suggestGrade(images: string[], category: Category, model: string): Promise<GradingSuggestion> {
+  const { system, text } = buildGradingPrompt(category, model);
+  const content: ContentBlock[] = [
+    ...images.map((data) => ({ type: "image" as const, source: { type: "base64" as const, media_type: "image/jpeg" as const, data } })),
+    { type: "text", text },
+  ];
+  const suggestion = parseGradingResponse(await callClaude({ system, user: content }));
+  if (!suggestion) throw new AiOutputError("Grading output failed validation");
+  return suggestion;
+}
+

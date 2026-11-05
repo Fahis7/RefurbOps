@@ -100,6 +100,26 @@ describe("grading and pricing", () => {
     expect(state.devices[0].grade).toBe("A");
   });
 
+  it("records an applied AI suggestion in the history note, including a human override", () => {
+    const graded = (cosmeticScore: number, aiSuggestion?: { cosmeticScore: number; confidence: number }) => {
+      let { state, id } = withDevice();
+      state = move(state, id, "GRADING", at(1));
+      state = grade(state, id, { cosmeticScore, batteryHealth: 92, needsRepair: false, aiSuggestion }, at(2));
+      return state.devices[0].history.at(-1)!.note;
+    };
+    expect(graded(4, { cosmeticScore: 4, confidence: 0.82 })).toBe("Graded B · AI suggested 4/5 (confidence 0.82)");
+    expect(graded(3, { cosmeticScore: 4, confidence: 0.82 })).toBe("Graded B · cosmetic 3/5 · AI suggested 4/5 (confidence 0.82)");
+    expect(graded(4)).toBe("Graded B");
+  });
+
+  it("rejects an invalid AI suggestion (the client sends it, so it is untrusted)", () => {
+    let { state, id } = withDevice();
+    state = move(state, id, "GRADING", at(1));
+    for (const aiSuggestion of [{ cosmeticScore: 7, confidence: 0.8 }, { cosmeticScore: 3.5, confidence: 0.8 }, { cosmeticScore: 4, confidence: 1.5 }]) {
+      expect(() => grade(state, id, { cosmeticScore: 4, batteryHealth: 92, needsRepair: false, aiSuggestion }, at(2))).toThrow(/AI suggestion/);
+    }
+  });
+
   it("prices cover cost and step down by grade", () => {
     const d = { costPrice: 300, repairCost: 50 };
     const [a, b, c] = (["A", "B", "C"] as const).map((g) => suggestPrice(d, g));
