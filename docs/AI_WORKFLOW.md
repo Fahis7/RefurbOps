@@ -42,3 +42,38 @@ subtle bug AI code introduces and a good test suite catches.
 - Timeout of 20 s; any failure **falls back to a deterministic template**, so the business never
   waits on the AI.
 - The source (`ai` or `template`) is stored on every listing, for auditing.
+
+## Guardrails on the AI Ops Assistant (*Ask AI*)
+
+- **The model never does maths.** `buildAssistantContext` (pure, `src/domain/assistant.ts`) pre-computes
+  stuck devices vs SLA, sales for the last 7 / 30 days and all time (every model and marketplace,
+  with `profit()` and pre-computed profit per sale), and QC returns per
+  supplier. The prompt forbids estimating, inventing or calculating new numbers and requires saying so when the data
+  can't answer.
+- **Device text is data, not instructions.** The context is JSON inside `<ops_data>`, with `<` and `>`
+  escaped so a supplier or model name cannot close the tag; the question sits in its own `<question>`
+  tag after it, and the system prompt says to ignore instructions inside the data.
+- **Output is untrusted.** `parseAssistantAnswer` rejects empty output and caps length; the UI renders
+  it as plain text (no HTML), and only device IDs that actually exist become links.
+- **Stateless, key server-side.** `POST /api/ai/ask` validates input (question 1–500 chars, context
+  ≤ 100 KB), times out after 20 s, rate-limits per IP (best effort) and stores nothing. No key → 503.
+- Every answer carries the note *"AI answer based on current app data – check before acting."*
+- Model calls use low effort with a 2,000-token budget and must finish with `stop_reason: "end_turn"`: a cut-off
+  (`max_tokens`) or `refusal` answer is rejected (502), never shown. Current models think by default and
+  thinking tokens count against `max_tokens` – a 400-token budget once produced a half answer.
+
+### Known limitations (Ask AI)
+
+Evaluated 2026-11-06 with 15 real calls (4 suggested questions + a prompt-injection supplier name, 3 runs each)
+on the demo seed data, every number and device ID checked by hand against the context sent:
+all 15 correct, injection never followed, 0 timeouts, 70–137 words.
+
+- **Latency outlier:** 14 calls took 2.4–3.8 s, one took 14.5 s – under the 20 s timeout, but close enough
+  that a slower day could produce an occasional "AI is unavailable" error.
+- **Medium effort timed out:** an earlier round at `effort: "medium"` timed out on 3 of 15 calls (2 of 3 for
+  "Where is profit lowest?"), so the assistant stays on `low`.
+- **Wording slips (soft):** answers sometimes offer a breakdown they have already given (e.g. "I can also
+  break this down by marketplace" after a marketplace line). Ambiguous questions get a stated interpretation.
+- The evaluation covers one dataset and one injection pattern; the model is non-deterministic, so re-run
+  the check after any prompt or model change.
+

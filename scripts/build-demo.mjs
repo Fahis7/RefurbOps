@@ -21,6 +21,8 @@ const result = await build({
     "process.env.NODE_ENV": '"production"',
     "process.env.NEXT_PUBLIC_DEMO_MODE": '"1"',
     "process.env.NEXT_PUBLIC_VERCEL_ENV": '""',
+    // No server in the single-file demo: the AI assistant shows an explanation instead of calling /api/ai/ask.
+    "process.env.NEXT_PUBLIC_STATIC_DEMO": '"1"',
   },
   logLevel: "warning",
 });

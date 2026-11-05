@@ -2,11 +2,11 @@
 import { useMemo, useState } from "react";
 import { STAGES, type AppState, type Device } from "@/domain/types";
 import { qcProgress } from "@/domain/qc";
+import { SLA_DAYS } from "@/domain/pipeline";
 import { DEVICE_COLUMNS, devicesToRows, filterDevices, toCsv } from "@/domain/export";
 import { downloadCsv, exportFileName } from "@/client/download";
 import { STAGE_LABEL, daysSince, eur, formatStorage } from "./format";
 
-const SLA_DAYS: Partial<Record<Device["stage"], number>> = { RECEIVED: 1, GRADING: 1, REPAIR: 3, QC: 1.5, LISTED: 10 };
 
 function DeviceCard({ d, onOpen }: { d: Device; onOpen: (id: string) => void }) {
   const since = daysSince(d.history[d.history.length - 1].at);

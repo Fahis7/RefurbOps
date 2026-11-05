@@ -1,14 +1,13 @@
 // CSV export for Excel. Pure: no Date.now(), no DOM – `now` is passed in, downloading lives in src/client/download.ts.
 
 import { MARKETPLACES, profit } from "./pricing";
+import { daysInStage } from "./pipeline";
 import { formatStorage, type Device } from "./types";
 
 export type Cell = string | number | null | undefined;
 
 /** UTF-8 byte-order mark: without it Excel opens the file as ANSI and mangles € and ₹. */
 export const CSV_BOM = "﻿";
-
-const DAY_MS = 86_400_000;
 
 /** Cells Excel/Sheets would run as a formula (CSV/formula injection). Tab and CR per OWASP. */
 const FORMULA_START = /^[=+\-@\t\r]/;
@@ -63,9 +62,7 @@ export const DEVICE_COLUMNS = [
 ] as const;
 
 export function devicesToRows(devices: readonly Device[], now: string): Cell[][] {
-  const nowMs = Date.parse(now);
   return devices.map((d) => {
-    const enteredStage = Date.parse(d.history[d.history.length - 1].at);
     // Devices saved before multi-currency have no purchase record: their cost was always EUR.
     const paid = d.purchase ?? { amount: d.costPrice, currency: "EUR", rate: 1 };
     const row: Record<(typeof DEVICE_COLUMNS)[number], Cell> = {
@@ -78,7 +75,7 @@ export function devicesToRows(devices: readonly Device[], now: string): Cell[][]
       Category: d.category,
       Grade: d.grade ?? null,
       Stage: d.stage,
-      "Days in stage": Math.round(((nowMs - enteredStage) / DAY_MS) * 10) / 10,
+      "Days in stage": Math.round(daysInStage(d, now) * 10) / 10,
       Supplier: d.supplier,
       "Paid amount": money(paid.amount),
       "Paid currency": paid.currency,

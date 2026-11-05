@@ -49,3 +49,11 @@ export function daysPerStage(device: Device, now: string): Partial<Record<Stage,
   });
   return out;
 }
+
+/** Target days per stage. Over target = "stuck" (pipeline board ⚠, AI assistant). SOLD has no target. */
+export const SLA_DAYS: Readonly<Partial<Record<Stage, number>>> = { RECEIVED: 1, GRADING: 1, REPAIR: 3, QC: 1.5, LISTED: 10 };
+
+/** Days since the device entered its current stage (unrounded). */
+export function daysInStage(device: Pick<Device, "history">, now: string): number {
+  return (Date.parse(now) - Date.parse(device.history[device.history.length - 1].at)) / 86_400_000;
+}

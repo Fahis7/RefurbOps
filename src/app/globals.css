@@ -209,6 +209,23 @@ input[type="checkbox"] { accent-color: var(--accent); }
 .chip { font: inherit; font-size: 12px; border: 1px solid var(--border); background: var(--surface); color: var(--text-2); border-radius: 6px; padding: 2px 8px; cursor: pointer; }
 .chip.on-pass { background: var(--good-bg); color: var(--good); border-color: var(--good); }
 .chip.on-fail { background: var(--bad-bg); color: var(--bad); border-color: var(--bad); }
+/* AI Ops Assistant */
+.assistant { max-width: 860px; }
+.ask-label { display: block; font-weight: 600; margin-bottom: 8px; }
+.ask-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.ask-input { flex: 1 1 240px; min-width: 0; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.chips .chip { font-size: 12.5px; padding: 5px 10px; border-radius: 99px; text-align: left; }
+.chips .chip:hover:not(:disabled) { background: var(--surface-2); color: var(--text); }
+.chips .chip:disabled { opacity: 0.5; cursor: not-allowed; }
+.chips .chip:focus-visible, .answer-text .link:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.ask-hint { margin: 0; }
+.answer-q { font-weight: 600; margin: 0 0 8px; overflow-wrap: anywhere; }
+.answer-text { white-space: pre-wrap; overflow-wrap: anywhere; margin: 0 0 8px; line-height: 1.55; }
+.answer-note { margin: 0; }
+.answer-loading { margin: 0; }
+.answer-info { margin: 0; padding: 10px 12px; border-radius: 8px; background: var(--warn-bg); color: var(--warn); font-size: 13px; }
+.answer-error { margin: 0; padding: 10px 12px; border-radius: 8px; background: var(--bad-bg); color: var(--bad); font-size: 13px; }
 .alert { padding: 10px 12px; border-radius: 8px; font-size: 13px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-bottom: 10px; }
 .alert.bad { background: var(--bad-bg); color: var(--bad); }
 .alert.warn { background: var(--warn-bg); color: var(--warn); }

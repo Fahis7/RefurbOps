@@ -21,6 +21,7 @@ Built with Next.js 16, React 19, TypeScript (strict) and Vitest, plus the Claude
 | **Multi-marketplace sync** (Back Market, refurbed, Amazon Renewed, simulated): idempotent order webhooks, first order wins, auto-delist elsewhere, late orders rejected with 409 | **Overselling** a single physical unit |
 | **AI listing generator**: Claude writes the marketplace copy from verified facts only; output validated; template fallback | Hours of copywriting, without the AI inventing specs |
 | **Dashboard**: live stock value, net profit after fees, QC first-pass rate, bottleneck stage, profit per marketplace | Leadership sees the business at a glance |
+| **Ask AI (Ops Assistant)**: plain-English questions ("Which devices are stuck?", "What sold best this week?"); answers only from pre-computed app data, device IDs link to the device | Managers get answers without building a report |
 
 > **Demo TACs.** IMEI autofill matches the first 8 digits (the TAC) against `src/domain/catalog.ts`.
 > Those TACs are **made-up demo values** (`35000101`, `35000401`, …). Real TACs come from the
@@ -77,6 +78,21 @@ Without demo mode, the API routes fall back to an **in-memory** store on Vercel 
 logged). That data resets on every cold start and isn't shared between server instances, so the
 oversell protection isn't guaranteed. Use a real database (`db/schema.sql`) for production.
 
+### AI Ops Assistant on Vercel
+
+The *Ask AI* tab calls the stateless route `POST /api/ai/ask`, so it also works in demo mode once
+`ANTHROPIC_API_KEY` is set on Vercel (server-side only, never sent to the browser). Without a key the
+tab shows "AI not configured". The offline single-file demo (`demo-dist/`) has no server, so the tab
+explains that instead.
+
+**Privacy.** When you ask a question, model names, suppliers and prices from the app are sent to Anthropic.
+
+**Cost control.** The route is public. It has a best-effort rate limit of 10 questions per minute per
+IP, but it is in memory and every serverless instance counts separately, so it only slows down casual
+abuse. **The real cost cap is the monthly spend limit set in the Anthropic Console** – keep one set
+for the key you put on Vercel. Each request is also bounded (question ≤ 500 chars, context ≤ 100 KB,
+answer ≤ 400 tokens).
+
 ## 3-minute demo script
 
 1. **Dashboard**: KPIs, the "Average days per stage" chart shows the bottleneck (Repair).
@@ -116,6 +132,7 @@ CLAUDE.md         context + rules for AI coding agents working on this repo
 | POST | `/api/devices/:id/list` | `{ marketplaces[], price? }` |
 | POST | `/api/webhooks/orders` | `{ marketplace, orderId, deviceId, price }` → 200 / 409 |
 | POST | `/api/reset` | – |
+| POST | `/api/ai/ask` | `{ question, context }` → `200 { answer }` · `400` invalid · `429` rate limited · `502` AI failed · `503 { error: "AI not configured" }` |
 
 Business-rule violations return `400 { error }`, e.g. *"All QC checks must pass before a device can be listed"*.
 

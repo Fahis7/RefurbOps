@@ -10,8 +10,9 @@ import { Marketplaces } from "./Marketplaces";
 import { AddDevice } from "./AddDevice";
 import { DeviceDrawer, type Run } from "./DeviceDrawer";
 import { ThemeToggle } from "./ThemeToggle";
+import { Assistant } from "./Assistant";
 
-type Tab = "dashboard" | "pipeline" | "marketplaces" | "intake";
+type Tab = "dashboard" | "pipeline" | "marketplaces" | "intake" | "assistant";
 type Toast = { id: number; kind: "ok" | "err" | "warn"; text: string };
 
 const TABS: { id: Tab; label: string; icon: string }[] = [
@@ -19,6 +20,7 @@ const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: "pipeline", label: "Repair pipeline", icon: "⇉" },
   { id: "marketplaces", label: "Marketplace sync", icon: "⇄" },
   { id: "intake", label: "Device intake", icon: "＋" },
+  { id: "assistant", label: "Ask AI", icon: "✦" },
 ];
 
 let orderSeq = Math.floor(Date.now() / 1000) % 100000;
@@ -146,6 +148,7 @@ export function App({ api = defaultApi }: { api?: Api }) {
             canResend={!!lastOrder.current}
           />
         )}
+        {tab === "assistant" && <Assistant api={api} state={state} onOpen={setOpen} />}
         {tab === "intake" && (
           <AddDevice
             api={api}
