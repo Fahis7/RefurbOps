@@ -10,6 +10,10 @@ export const MAX_IMAGE_B64_CHARS = 1_500_000;
 export const MAX_GRADE_BODY_BYTES = 4_000_000;
 export const MAX_MODEL_CHARS = 80;
 export const MAX_DAMAGE_ITEMS = 10;
+/** Below this the AI is too unsure: no "Apply" button, the technician grades manually. */
+export const MIN_APPLY_CONFIDENCE = 0.5;
+/** Below this (but ≥ MIN_APPLY_CONFIDENCE) Apply stays, with a "Low confidence – check manually" warning. */
+export const LOW_CONFIDENCE_WARNING = 0.6;
 
 const CATEGORIES: readonly Category[] = ["Smartphone", "Laptop", "Tablet"];
 const SEVERITIES = ["minor", "moderate", "major"] as const;
@@ -94,3 +98,9 @@ export function validateGradeRequest(body: unknown): { images: string[]; categor
   if (typeof model !== "string" || !model.trim() || model.length > MAX_MODEL_CHARS) throw new DomainError("Invalid model");
   return { images: images as string[], category: category as Category, model: model.trim() };
 }
+
+/** Whether the UI may offer "Apply" for a suggestion (e.g. a photo of a mug gets confidence ~0.02 → no). */
+export function canApplySuggestion(s: Pick<GradingSuggestion, "confidence">): boolean {
+  return s.confidence >= MIN_APPLY_CONFIDENCE;
+}
+

@@ -1,11 +1,9 @@
 "use client";
 import { useRef, useState, type ChangeEvent } from "react";
 import type { Device } from "@/domain/types";
-import { MAX_IMAGES, type GradingSuggestion } from "@/domain/vision";
+import { LOW_CONFIDENCE_WARNING, MAX_IMAGES, canApplySuggestion, type GradingSuggestion } from "@/domain/vision";
 import type { AiFailure, Api } from "@/client/api";
 import { preparePhoto } from "@/client/photo";
-
-const LOW_CONFIDENCE = 0.6;
 
 type State =
   | { kind: "idle" }
@@ -81,13 +79,25 @@ export function PhotoGradeSuggest({
         </p>
       )}
 
-      {state.kind === "done" && (
+      {state.kind === "done" && !canApplySuggestion(state.suggestion) && (
+        // Too unsure (e.g. not a device): no score, no Apply – only the message and Ignore.
+        <div className="photo-suggestion">
+          <p className="answer-info">Too unsure to suggest a grade – grade manually</p>
+          <div className="row gap">
+            <button type="button" className="btn ghost small-btn" onClick={ignore}>
+              Ignore
+            </button>
+          </div>
+        </div>
+      )}
+
+      {state.kind === "done" && canApplySuggestion(state.suggestion) && (
         <div className="photo-suggestion">
           <p className="photo-suggestion-head">
             <strong>AI suggests {state.suggestion.cosmeticScore}/5</strong>
             <span className="muted small"> · confidence {state.suggestion.confidence.toFixed(2)}</span>
           </p>
-          {state.suggestion.confidence < LOW_CONFIDENCE && <p className="answer-info">Low confidence – check manually</p>}
+          {state.suggestion.confidence < LOW_CONFIDENCE_WARNING && <p className="answer-info">Low confidence – check manually</p>}
           {state.suggestion.damage.length > 0 ? (
             <ul className="damage-list">
               {state.suggestion.damage.map((x, i) => (

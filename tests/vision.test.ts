@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 import {
+  LOW_CONFIDENCE_WARNING,
   MAX_IMAGE_B64_CHARS,
+  MIN_APPLY_CONFIDENCE,
+  canApplySuggestion,
   buildGradingPrompt,
   parseGradingResponse,
   validateGradeRequest,
@@ -63,6 +66,18 @@ describe("parseGradingResponse (model output is untrusted)", () => {
     expect(parseGradingResponse("")).toBeNull();
     expect(parseGradingResponse("I cannot see a device.")).toBeNull();
     expect(parseGradingResponse("{not json}")).toBeNull();
+  });
+});
+
+describe("canApplySuggestion", () => {
+  it("hides Apply below 0.5 confidence, keeps it (with a warning) from 0.5", () => {
+    expect(MIN_APPLY_CONFIDENCE).toBe(0.5);
+    expect(LOW_CONFIDENCE_WARNING).toBe(0.6);
+    expect(canApplySuggestion({ confidence: 0.02 })).toBe(false); // e.g. a photo of a mug
+    expect(canApplySuggestion({ confidence: 0.49 })).toBe(false);
+    expect(canApplySuggestion({ confidence: 0.5 })).toBe(true);
+    expect(canApplySuggestion({ confidence: 0.59 })).toBe(true);
+    expect(canApplySuggestion({ confidence: 0.82 })).toBe(true);
   });
 });
 

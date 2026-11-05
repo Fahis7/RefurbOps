@@ -70,8 +70,8 @@ subtle bug AI code introduces and a good test suite catches.
 - **Visible condition only.** The prompt forbids guessing battery or function, asks for low confidence when
   a photo is not a device or is unclear, and treats text inside photos as data, never instructions.
 - **Strict output parsing** (`parseGradingResponse`): integer score 1–5, ≤ 10 damage items, severity enum,
-  confidence 0–1, capped strings – anything else → 502 "AI answer could not be used". Confidence < 0.6 shows
-  "Low confidence – check manually".
+  confidence 0–1, capped strings – anything else → 502 "AI answer could not be used". Confidence < 0.5 hides
+  *Apply* ("Too unsure to suggest a grade – grade manually"); 0.5–0.6 shows "Low confidence – check manually".
 - **Photos are never stored:** resized in the browser (≤ 1024 px JPEG), sent once, not written to state, disk
   or logs. Route limits: 1–3 JPEGs, ≤ 1.5 MB each as base64, ≤ 4 MB body (413), rate limit, no key → 503.
 
@@ -98,7 +98,8 @@ and scratches → 1/5 (0.8, crack reported as major); a mug → confidence 0.02 
 
 - **Tested on drawings, not real photos.** The model noticed the clean image was an illustration and gave it
   low confidence (0.3). Accuracy on real workshop photos (lighting, glare, fine micro-scratches) is untested.
-- **Non-device photos still return a score.** The mug got a placeholder 3/5 with confidence 0.02. The UI shows
-  "Low confidence – check manually", but the *Apply* button is still offered – the technician must not apply it.
+- **Non-device photos still return a score.** The mug got a placeholder 3/5 with confidence 0.02. Below
+  confidence 0.5 (`MIN_APPLY_CONFIDENCE`) the UI hides the score and *Apply* and shows only "Too unsure to
+  suggest a grade – grade manually" + *Ignore*; from 0.5 to 0.6 *Apply* stays with a low-confidence warning.
 - Only one front-facing photo was tested per call; multi-photo requests (2–3 images) were covered by unit tests only.
 
