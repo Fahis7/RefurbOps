@@ -25,6 +25,13 @@ describe("seed data + stats invariants", () => {
     }
   });
 
+  it("sync log is in time order, newest first", () => {
+    const log = state.syncLog;
+    for (let i = 0; i < log.length - 1; i++) {
+      expect(log[i].at >= log[i + 1].at, `${log[i].id} (${log[i].at}) before ${log[i + 1].id} (${log[i + 1].at})`).toBe(true);
+    }
+  });
+
   it("stage counts add up to total devices", () => {
     expect(stats.byStage.reduce((s, x) => s + x.count, 0)).toBe(state.devices.length);
   });

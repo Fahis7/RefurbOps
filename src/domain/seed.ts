@@ -54,7 +54,8 @@ export function seedState(nowIso: string, count = 42): AppState {
   let state = emptyState();
   let orderNo = 50000;
 
-  // Process devices oldest-first so the activity log reads in time order.
+  // Process devices oldest-first. Each device's history spans days, so the log is
+  // re-sorted by time at the end.
   const plans = Array.from({ length: count }, (_, i) => ({ i, age: 0.2 + rand() ** 1.5 * 36 })).sort((a, b) => b.age - a.age);
 
   for (const { i, age } of plans) {
@@ -130,5 +131,10 @@ export function seedState(nowIso: string, count = 42): AppState {
       iso(),
     ).state;
   }
-  return state;
+  // Newest first; same timestamp → higher log id first (keeps "Sold" next to its "Delisted").
+  const logNo = (id: string) => Number(id.slice("log-".length));
+  return {
+    ...state,
+    syncLog: [...state.syncLog].sort((a, b) => b.at.localeCompare(a.at) || logNo(b.id) - logNo(a.id)),
+  };
 }
